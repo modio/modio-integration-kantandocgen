@@ -41,7 +41,8 @@ public class KantanDocGen : ModuleRules
 				"RenderCore",
 				"SlateRHIRenderer",
 				"Settings",
-				"AssetRegistry"
+				"AssetRegistry",
+				"UMGEditor"
             }
         );
 	}
