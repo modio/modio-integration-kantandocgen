@@ -6,12 +6,15 @@
 
 #include "NodeDocsGenerator.h"
 #include "Async/Async.h"
+#include "Blueprint/UserWidget.h"
 #include "BlueprintActionDatabase.h"
 #include "BlueprintBoundNodeSpawner.h"
 #include "BlueprintComponentNodeSpawner.h"
 #include "BlueprintEventNodeSpawner.h"
 #include "BlueprintFunctionNodeSpawner.h"
 #include "BlueprintNodeSpawner.h"
+#include "Components/TextBlock.h"
+#include "Components/Widget.h"
 #include "DocTreeNode.h"
 #include "DoxygenParserHelpers.h"
 #include "EdGraphSchema_K2.h"
@@ -33,13 +36,9 @@
 #include "Stats/StatsMisc.h"
 #include "TextureResource.h"
 #include "ThreadingHelpers.h"
-#include "UMG/Public/Blueprint/UserWidget.h"
-#include "UMG/Public/Components/Widget.h"
 #include "UObject/MetaData.h"
 #include "WidgetBlueprint.h"
-
-#include "Components/TextBlock.h"
-#include "UMGEditor/Public/WidgetBlueprintEditorUtils.h"
+#include "WidgetBlueprintEditorUtils.h"
 
 bool IsFunctionInherited(UFunction* Function)
 {
