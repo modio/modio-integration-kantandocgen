@@ -136,7 +136,7 @@ TSharedPtr<struct IDocGenOutputProcessor> UDocGenMdxOutputFactory::CreateInterme
 
 FString UDocGenMdxOutputFactory::GetFormatIdentifier()
 {
-	return "json";
+	return "mdx";
 }
 
 void UDocGenMdxOutputFactory::LoadSettings(const FDocGenOutputFormatFactorySettings& Settings)

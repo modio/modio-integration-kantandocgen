@@ -311,7 +311,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString
 									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
 	if (!InstallProcessHandle.IsValid())
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("Create process for npm install step failed"));
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm install step create process failed for %s"), *(NpmExecutablePath.FilePath));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 	FPlatformProcess::WaitForProc(InstallProcessHandle);
@@ -330,7 +330,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString
 									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
 	if (!BuildProcessHandle.IsValid())
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("Create process for npm build step failed"));
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm build step create process failed for %s"), *(NpmExecutablePath.FilePath));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 	FPlatformProcess::WaitForProc(BuildProcessHandle);
