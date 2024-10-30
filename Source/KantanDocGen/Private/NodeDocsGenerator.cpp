@@ -1148,7 +1148,7 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 						}
 					}
 
-					const FString& Comment = PropertyIterator->GetMetaData(TEXT("Comment"));
+					const FString Comment = PropertyIterator->GetMetaData(TEXT("Comment"));
 					auto MemberTags = Detail::ParseDoxygenTagsForString(Comment);
 					if (MemberTags.Num())
 					{
