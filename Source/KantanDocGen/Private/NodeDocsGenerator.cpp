@@ -1148,7 +1148,7 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 						}
 					}
 
-					const FString& Comment = PropertyIterator->GetMetaData(TEXT("Comment"));
+					const FString Comment = PropertyIterator->GetMetaData(TEXT("Comment"));
 					auto MemberTags = Detail::ParseDoxygenTagsForString(Comment);
 					if (MemberTags.Num())
 					{
@@ -1184,7 +1184,16 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 					UE_LOG(LogKantanDocGen, Display, TEXT("skipping member : %s"), *PropertyIterator->GetNameCPP());
 				}
 			}
-			const FString& Comment = ClassInstance->GetMetaData(TEXT("Comment"));
+
+			const FString& Comment = [ClassInstance]() {
+				FString OutComment = ClassInstance->GetMetaData(TEXT("Comment"));
+				if (OutComment.IsEmpty() && ClassInstance->ClassGeneratedBy)
+				{
+					OutComment = ClassInstance->ClassGeneratedBy->GetPackage()->GetMetaData()->GetValue(ClassInstance->ClassGeneratedBy, "Comment");
+				}
+				return OutComment;
+			}();
+
 			bool HasComment = Comment.Len() > 0;
 			auto ClassTags = Detail::ParseDoxygenTagsForString(Comment);
 			if (ClassTags.Num())
