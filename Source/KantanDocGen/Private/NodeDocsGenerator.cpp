@@ -433,7 +433,7 @@ bool FNodeDocsGenerator::GenerateNodeImage(UEdGraphNode* Node, FNodeProcessingSt
 		auto NodeWidget = FNodeFactory::CreateNodeWidget(Node);
 		NodeWidget->SetOwner(GraphPanel.ToSharedRef());
 
-		const bool bUseGammaCorrection = false;
+		const bool bUseGammaCorrection = true;
 		FWidgetRenderer LocalRenderer(false);
 		LocalRenderer.SetIsPrepassNeeded(true);
 		LocalRenderer.ViewOffset = FVector2D(8, 8);
@@ -442,9 +442,9 @@ bool FNodeDocsGenerator::GenerateNodeImage(UEdGraphNode* Node, FNodeProcessingSt
 		const EPixelFormat PixelFormat = FSlateApplication::Get().GetRenderer()->GetSlateRecommendedColorFormat();
 		UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>();
 		RenderTarget->Filter = TF_Bilinear;
-		RenderTarget->ClearColor = FLinearColor(38 / 255.f, 38 / 255.f, 38 / 255.f);
-		RenderTarget->SRGB = bIsLinearSpace;
-		RenderTarget->TargetGamma = 1;
+		RenderTarget->ClearColor = FLinearColor(FMath::Pow(38 / 255.f, 2.2), FMath::Pow(38 / 255.f, 2.2), FMath::Pow(38 / 255.f, 2.2));
+		RenderTarget->SRGB = true;
+		RenderTarget->TargetGamma = 2.2;
 		RenderTarget->InitCustomFormat(DrawSize.X, DrawSize.Y, PixelFormat, bIsLinearSpace);
 		RenderTarget->UpdateResourceImmediate(true);
 
@@ -458,7 +458,7 @@ bool FNodeDocsGenerator::GenerateNodeImage(UEdGraphNode* Node, FNodeProcessingSt
 		FTextureRenderTargetResource* RTResource = RenderTarget->GameThread_GetRenderTargetResource();
 		Rect = FIntRect(0, 0, (int32) Desired.X, (int32) Desired.Y);
 		FReadSurfaceDataFlags ReadPixelFlags(RCM_UNorm);
-		ReadPixelFlags.SetLinearToGamma(true); // @TODO: is this gamma correction, or something else?
+		ReadPixelFlags.SetLinearToGamma(false); // @TODO: is this gamma correction, or something else?
 
 		PixelData = MakeUnique<TImagePixelData<FColor>>(FIntPoint((int32) Desired.X, (int32) Desired.Y));
 		PixelData->Pixels.SetNumUninitialized((int32) Desired.X * (int32) Desired.Y);
