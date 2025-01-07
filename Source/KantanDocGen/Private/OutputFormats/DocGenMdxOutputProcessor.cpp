@@ -1,15 +1,7 @@
-#include "OutputFormats/DocGenJsonOutputProcessor.h"
+#include "OutputFormats/DocGenMdxOutputProcessor.h"
 #include "Algo/Transform.h"
 #include "HAL/FileManager.h"
-
-// To define the UE_5_0_OR_LATER below
-#include "Misc/EngineVersionComparison.h"
-#if UE_VERSION_NEWER_THAN(5, 0, 0)
-	#include "HAL/PlatformFileManager.h"
-#else
-	#include "HAL/PlatformFilemanager.h"
-#endif
-
+#include "HAL/PlatformFileManager.h"
 #include "Json.h"
 #include "JsonDomBuilder.h"
 #include "KantanDocGenLog.h"
@@ -17,7 +9,7 @@
 #include "Misc/Optional.h"
 #include "Misc/Paths.h"
 
-FString DocGenJsonOutputProcessor::Quote(const FString& In)
+FString DocGenMdxOutputProcessor::Quote(const FString& In)
 {
 	if (In.TrimStartAndEnd().StartsWith("\""))
 	{
@@ -26,8 +18,8 @@ FString DocGenJsonOutputProcessor::Quote(const FString& In)
 	return "\"" + In.TrimStartAndEnd() + "\"";
 }
 
-TOptional<FString> DocGenJsonOutputProcessor::GetObjectStringField(const TSharedPtr<FJsonObject> Obj,
-																   const FString& FieldName)
+TOptional<FString> DocGenMdxOutputProcessor::GetObjectStringField(const TSharedPtr<FJsonObject> Obj,
+																  const FString& FieldName)
 {
 	FString FieldValue;
 	if (!Obj->TryGetStringField(FieldName, FieldValue))
@@ -40,8 +32,8 @@ TOptional<FString> DocGenJsonOutputProcessor::GetObjectStringField(const TShared
 	}
 }
 
-TOptional<FString> DocGenJsonOutputProcessor::GetObjectStringField(const TSharedPtr<FJsonValue> Obj,
-																   const FString& FieldName)
+TOptional<FString> DocGenMdxOutputProcessor::GetObjectStringField(const TSharedPtr<FJsonValue> Obj,
+																  const FString& FieldName)
 {
 	const TSharedPtr<FJsonObject>* UnderlyingObject = nullptr;
 	if (!Obj->TryGetObject(UnderlyingObject))
@@ -54,8 +46,8 @@ TOptional<FString> DocGenJsonOutputProcessor::GetObjectStringField(const TShared
 	}
 }
 
-TOptional<TArray<FString>> DocGenJsonOutputProcessor::GetNamesFromFileAtLocation(const FString& NameType,
-																				 const FString& ClassFile)
+TOptional<TArray<FString>> DocGenMdxOutputProcessor::GetNamesFromFileAtLocation(const FString& NameType,
+																				const FString& ClassFile)
 {
 	TSharedPtr<FJsonObject> ParsedClass = LoadFileToJson(ClassFile);
 	if (!ParsedClass)
@@ -96,7 +88,7 @@ TOptional<TArray<FString>> DocGenJsonOutputProcessor::GetNamesFromFileAtLocation
 	return {};
 }
 
-TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseNodeFile(const FString& NodeFilePath)
+TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseNodeFile(const FString& NodeFilePath)
 {
 	TSharedPtr<FJsonObject> ParsedNode = LoadFileToJson(NodeFilePath);
 	if (!ParsedNode)
@@ -122,7 +114,7 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseNodeFile(const FString& 
 	return OutNode;
 }
 
-TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseClassFile(const FString& ClassFilePath)
+TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseClassFile(const FString& ClassFilePath)
 {
 	TSharedPtr<FJsonObject> ParsedClass = LoadFileToJson(ClassFilePath);
 	if (!ParsedClass)
@@ -149,7 +141,7 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseClassFile(const FString&
 	return OutNode;
 }
 
-TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseStructFile(const FString& StructFilePath)
+TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseStructFile(const FString& StructFilePath)
 {
 	TSharedPtr<FJsonObject> ParsedStruct = LoadFileToJson(StructFilePath);
 	if (!ParsedStruct)
@@ -176,7 +168,7 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseStructFile(const FString
 	return OutNode;
 }
 
-TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseEnumFile(const FString& EnumFilePath)
+TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseEnumFile(const FString& EnumFilePath)
 {
 	TSharedPtr<FJsonObject> ParsedEnum = LoadFileToJson(EnumFilePath);
 	if (!ParsedEnum)
@@ -195,8 +187,8 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseEnumFile(const FString& 
 	return OutNode;
 }
 
-void DocGenJsonOutputProcessor::CopyJsonField(const FString& FieldName, TSharedPtr<FJsonObject> ParsedNode,
-											  TSharedPtr<FJsonObject> OutNode)
+void DocGenMdxOutputProcessor::CopyJsonField(const FString& FieldName, TSharedPtr<FJsonObject> ParsedNode,
+											 TSharedPtr<FJsonObject> OutNode)
 {
 	if (TSharedPtr<FJsonValue> Field = ParsedNode->TryGetField(FieldName))
 	{
@@ -204,7 +196,7 @@ void DocGenJsonOutputProcessor::CopyJsonField(const FString& FieldName, TSharedP
 	}
 }
 
-TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::InitializeMainOutputFromIndex(TSharedPtr<FJsonObject> ParsedIndex)
+TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::InitializeMainOutputFromIndex(TSharedPtr<FJsonObject> ParsedIndex)
 {
 	TSharedPtr<FJsonObject> Output = MakeShared<FJsonObject>();
 
@@ -212,137 +204,161 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::InitializeMainOutputFromIndex
 	return Output;
 }
 
-EIntermediateProcessingResult DocGenJsonOutputProcessor::ConvertJsonToAdoc(FString IntermediateDir)
+EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString IntermediateDir)
 {
 	const FFilePath InJsonPath {IntermediateDir / "consolidated.json"};
-	const FFilePath OutAdocPath {IntermediateDir / "docs.adoc"};
+	const FFilePath OutMdxPath {IntermediateDir / "docs.mdx"};
 
+	const FString Format {"markdown"};
 	void* PipeRead = nullptr;
 	void* PipeWrite = nullptr;
 	verify(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
 
-	const FString Args =
-		Quote(TemplatePath.FilePath) + " " + Quote(InJsonPath.FilePath) + " " + Quote(OutAdocPath.FilePath);
+	const FString Args = Quote(TemplatePath.FilePath) + " " + Quote(InJsonPath.FilePath) + " " +
+						 Quote(OutMdxPath.FilePath) + " " + Quote(Format);
 
 	FProcHandle Proc = FPlatformProcess::CreateProc(*(BinaryPath.Path / "convert.exe"), *Args, true, false, false,
 													nullptr, 0, nullptr, PipeWrite);
-
-	int32 ReturnCode = 0;
-	if (Proc.IsValid())
+	if (!Proc.IsValid())
 	{
-		FString BufferedText;
-		for (bool bProcessFinished = false; !bProcessFinished;)
-		{
-			bProcessFinished = FPlatformProcess::GetProcReturnCode(Proc, &ReturnCode);
-
-			/*			if(!bProcessFinished && Warn->ReceivedUserCancel())
-			{
-			FPlatformProcess::TerminateProc(ProcessHandle);
-			bProcessFinished = true;
-			}
-			*/
-			BufferedText += FPlatformProcess::ReadPipe(PipeRead);
-			int32 EndOfLineIdx;
-			while (BufferedText.FindChar('\n', EndOfLineIdx))
-			{
-				FString Line = BufferedText.Left(EndOfLineIdx);
-				Line.RemoveFromEnd(TEXT("\r"));
-
-				UE_LOG(LogKantanDocGen, Error, TEXT("[KantanDocGen] %s"), *Line);
-
-				BufferedText = BufferedText.Mid(EndOfLineIdx + 1);
-			}
-
-			FPlatformProcess::Sleep(0.1f);
-		}
-		FPlatformProcess::CloseProc(Proc);
-		Proc.Reset();
-
-		if (ReturnCode != 0)
-		{
-			UE_LOG(LogKantanDocGen, Error, TEXT("KantanDocGen tool failed (code %i), see above output."), ReturnCode);
-			return EIntermediateProcessingResult::UnknownError;
-		}
-		else
-		{
-			return EIntermediateProcessingResult::Success;
-		}
-	}
-	else
-	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to create process %s"), *(BinaryPath.Path / "convert.exe"));
 		return EIntermediateProcessingResult::UnknownError;
 	}
+
+	FString BufferedText;
+	int32 ReturnCode = 0;
+	for (bool bProcessFinished = false; !bProcessFinished;)
+	{
+		bProcessFinished = FPlatformProcess::GetProcReturnCode(Proc, &ReturnCode);
+		BufferedText += FPlatformProcess::ReadPipe(PipeRead);
+		int32 EndOfLineIdx;
+		while (BufferedText.FindChar('\n', EndOfLineIdx))
+		{
+			FString Line = BufferedText.Left(EndOfLineIdx);
+			Line.RemoveFromEnd(TEXT("\r"));
+
+			UE_LOG(LogKantanDocGen, Error, TEXT("[KantanDocGen] %s"), *Line);
+
+			BufferedText = BufferedText.Mid(EndOfLineIdx + 1);
+		}
+
+		FPlatformProcess::Sleep(0.1f);
+	}
+	FPlatformProcess::CloseProc(Proc);
+	Proc.Reset();
+	if (ReturnCode != 0)
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("KantanDocGen tool failed (code %i), see above output."), ReturnCode);
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	// create docusaurus staging directory
+	const FString DocusaurusStagingPath {IntermediateDir / "docusaurus"};
+	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*DocusaurusStagingPath, *DocusaurusPath.Path,
+																		 true))
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy template docusaurus %s to intermediate directory %s"),
+			   *DocusaurusPath.Path, *DocusaurusStagingPath);
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	// merge doc_root into staging directory
+	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*(DocusaurusStagingPath / "public"),
+																		 *(DocRootPath.Path), false))
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to merge doc_root %s into docusaurus staging directory %s"),
+			   *(DocRootPath.Path), *(DocusaurusStagingPath / "public"));
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	// copy the newly generated mdx and img files into staging directory
+	const FFilePath MdxDestinationPath {DocusaurusStagingPath / "public/en-us/generated-refdocs.mdx"};
+	const FDirectoryPath ImgDestinationPath {DocusaurusStagingPath / "public/en-us/img/generated-refdocs"};
+	if (IFileManager::Get().Copy(*MdxDestinationPath.FilePath, *OutMdxPath.FilePath) != 0)
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy generated file %s to %s"), *OutMdxPath.FilePath,
+			   *MdxDestinationPath.FilePath);
+		return EIntermediateProcessingResult::UnknownError;
+	}
+	TArray<FString> ImgDirectories;
+	IFileManager::Get().FindFilesRecursive(ImgDirectories, *IntermediateDir, TEXT("img"), false, true);
+	for (FString ImgDirectory : ImgDirectories)
+	{
+		TArray<FString> ImageFiles;
+		IFileManager::Get().FindFiles(ImageFiles, *ImgDirectory, TEXT("png"));
+		for (FString Image : ImageFiles)
+		{
+			FString SourceImagePath {ImgDirectory / Image};
+			FString DestinationImagePath {ImgDestinationPath.Path / Image};
+			if (IFileManager::Get().Copy(*DestinationImagePath, *SourceImagePath) != 0)
+			{
+				UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy %s to %s"), *SourceImagePath,
+					   *DestinationImagePath);
+				return EIntermediateProcessingResult::UnknownError;
+			}
+		}
+	}
+	return EIntermediateProcessingResult::Success;
 }
 
-EIntermediateProcessingResult DocGenJsonOutputProcessor::ConvertAdocToHTML(FString IntermediateDir, FString OutputDir)
+EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString IntermediateDir, FString OutputDir)
 {
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	PlatformFile.CreateDirectory(*(OutputDir / "img"));
-	PlatformFile.CopyDirectoryTree(*(OutputDir / "img"), *(BinaryPath.Path / "img"), true);
+	const FString DocusaurusStagingPath {IntermediateDir / "docusaurus"};
 
-	const FFilePath InAdocPath {IntermediateDir / "docs.adoc"};
-	const FFilePath OutHTMLPath {OutputDir / "documentation.html"};
-	void* PipeRead = nullptr;
-	void* PipeWrite = nullptr;
-	verify(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
-
-	const FString Args = Quote(BinaryPath.Path / "scripts" / "render_html.rb") + " " + Quote(InAdocPath.FilePath) +
-						 " " + Quote(OutHTMLPath.FilePath);
-
-	FProcHandle Proc = FPlatformProcess::CreateProc(*(RubyExecutablePath.FilePath), *Args, true, false, false, nullptr,
-													0, *(BinaryPath.Path / "scripts"), PipeWrite);
-
-	int32 ReturnCode = 0;
-	if (Proc.IsValid())
+	// invoke npm install to install required packages
+	FProcHandle InstallProcessHandle =
+		FPlatformProcess::CreateProc(*(NpmExecutablePath.FilePath), TEXT("install"), true, false, false, nullptr, 0,
+									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
+	if (!InstallProcessHandle.IsValid())
 	{
-		FString BufferedText;
-		for (bool bProcessFinished = false; !bProcessFinished;)
-		{
-			bProcessFinished = FPlatformProcess::GetProcReturnCode(Proc, &ReturnCode);
-
-			/*			if(!bProcessFinished && Warn->ReceivedUserCancel())
-			{
-			FPlatformProcess::TerminateProc(ProcessHandle);
-			bProcessFinished = true;
-			}
-			*/
-			BufferedText += FPlatformProcess::ReadPipe(PipeRead);
-
-			int32 EndOfLineIdx;
-			while (BufferedText.FindChar('\n', EndOfLineIdx))
-			{
-				FString Line = BufferedText.Left(EndOfLineIdx);
-				Line.RemoveFromEnd(TEXT("\r"));
-
-				UE_LOG(LogKantanDocGen, Log, TEXT("[KantanDocGen] %s"), *Line);
-
-				BufferedText = BufferedText.Mid(EndOfLineIdx + 1);
-			}
-
-			FPlatformProcess::Sleep(0.1f);
-		}
-		FPlatformProcess::CloseProc(Proc);
-		Proc.Reset();
-
-		if (ReturnCode != 0)
-		{
-			UE_LOG(LogKantanDocGen, Error, TEXT("KantanDocGen tool failed (code %i), see above output."), ReturnCode);
-			return EIntermediateProcessingResult::UnknownError;
-		}
-		else
-		{
-			return EIntermediateProcessingResult::Success;
-		}
-	}
-	else
-	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm install step create process failed for %s"), *(NpmExecutablePath.FilePath));
 		return EIntermediateProcessingResult::UnknownError;
 	}
+	FPlatformProcess::WaitForProc(InstallProcessHandle);
+	int32 InstallExitCode;
+	FPlatformProcess::GetProcReturnCode(InstallProcessHandle, &InstallExitCode);
+	FPlatformProcess::CloseProc(InstallProcessHandle);
+	if (InstallExitCode != 0)
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm install error"));
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	// invoke npm run build to build the html docs
+	FProcHandle BuildProcessHandle =
+		FPlatformProcess::CreateProc(*(NpmExecutablePath.FilePath), TEXT("run build"), true, false, false, nullptr, 0,
+									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
+	if (!BuildProcessHandle.IsValid())
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm build step create process failed for %s"), *(NpmExecutablePath.FilePath));
+		return EIntermediateProcessingResult::UnknownError;
+	}
+	FPlatformProcess::WaitForProc(BuildProcessHandle);
+	int32 BuildExitCode;
+	FPlatformProcess::GetProcReturnCode(BuildProcessHandle, &BuildExitCode);
+	FPlatformProcess::CloseProc(BuildProcessHandle);
+	if (BuildExitCode != 0)
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm run build error"));
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	// copy result from intermediate directory to output directory
+	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*OutputDir, *(DocusaurusStagingPath / "build"),
+																		 true))
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy build docs %s to output directory %s"),
+			   *(DocusaurusStagingPath / "build"), *OutputDir);
+		return EIntermediateProcessingResult::UnknownError;
+	}
+	return EIntermediateProcessingResult::Success;
 }
 
-DocGenJsonOutputProcessor::DocGenJsonOutputProcessor(TOptional<FFilePath> TemplatePathOverride,
-													 TOptional<FDirectoryPath> BinaryPathOverride,
-													 TOptional<FFilePath> RubyExecutablePathOverride)
+DocGenMdxOutputProcessor::DocGenMdxOutputProcessor(TOptional<FFilePath> TemplatePathOverride,
+												   TOptional<FDirectoryPath> BinaryPathOverride,
+												   TOptional<FFilePath> NpmPathOverride,
+												   TOptional<FDirectoryPath> DocRootPathOverride,
+												   TOptional<FDirectoryPath> DocusaurusPathOverride)
 {
 	if (BinaryPathOverride.IsSet())
 	{
@@ -352,30 +368,44 @@ DocGenJsonOutputProcessor::DocGenJsonOutputProcessor(TOptional<FFilePath> Templa
 	{
 		BinaryPath.Path = FString("bin");
 	}
-
 	if (TemplatePathOverride.IsSet())
 	{
 		TemplatePath = TemplatePathOverride.GetValue();
 	}
 	else
 	{
-		TemplatePath.FilePath = BinaryPath.Path / "template" / "docs.adoc.in";
+		TemplatePath.FilePath = BinaryPath.Path / "template" / "docs.mdx.in";
 	}
-
-	if (RubyExecutablePathOverride.IsSet())
+	if (NpmPathOverride.IsSet())
 	{
-		RubyExecutablePath = RubyExecutablePathOverride.GetValue();
+		NpmExecutablePath = NpmPathOverride.GetValue();
 	}
 	else
 	{
-		RubyExecutablePath.FilePath = "ruby.exe";
+		NpmExecutablePath.FilePath = "C:/Program Files/nodejs/npm.cmd";
+	}
+	if (DocRootPathOverride.IsSet())
+	{
+		DocRootPath = DocRootPathOverride.GetValue();
+	}
+	else
+	{
+		DocRootPath.Path = BinaryPath.Path / "doc_root";
+	}
+	if (DocusaurusPathOverride.IsSet())
+	{
+		DocusaurusPath = DocusaurusPathOverride.GetValue();
+	}
+	else
+	{
+		DocusaurusPath.Path = FPaths::ProjectDir() / "Tools/docusaurus";
 	}
 }
 
-EIntermediateProcessingResult DocGenJsonOutputProcessor::ProcessIntermediateDocs(FString const& IntermediateDir,
-																				 FString const& OutputDir,
-																				 FString const& DocTitle,
-																				 bool bCleanOutput)
+EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(FString const& IntermediateDir,
+																				FString const& OutputDir,
+																				FString const& DocTitle,
+																				bool bCleanOutput)
 {
 	TSharedPtr<FJsonObject> ParsedIndex = LoadFileToJson(IntermediateDir / "index.json");
 
@@ -411,17 +441,19 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ProcessIntermediateDocs
 	{
 		return EIntermediateProcessingResult::DiskWriteFailure;
 	}
-	if (ConvertJsonToAdoc(IntermediateDir) == EIntermediateProcessingResult::Success)
+	// create mdx and image files, and copy them to doc_root
+	if (ConvertJsonToMdx(IntermediateDir) == EIntermediateProcessingResult::Success)
 	{
-		return ConvertAdocToHTML(IntermediateDir, OutputDir);
+		// invoke npm to convert mdx to html, and copy results to specified output directory
+		return ConvertMdxToHtml(IntermediateDir, OutputDir);
 	}
 	return EIntermediateProcessingResult::UnknownError;
 }
 
-EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSharedPtr<FJsonObject> ParsedIndex,
-																			FString const& IntermediateDir,
-																			FString const& OutputDir,
-																			TSharedPtr<FJsonObject> ConsolidatedOutput)
+EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TSharedPtr<FJsonObject> ParsedIndex,
+																		   FString const& IntermediateDir,
+																		   FString const& OutputDir,
+																		   TSharedPtr<FJsonObject> ConsolidatedOutput)
 {
 	FJsonDomBuilder::FArray StaticFunctionList;
 	FJsonDomBuilder::FObject ClassFunctionList;
@@ -503,10 +535,10 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSha
 	return EIntermediateProcessingResult::Success;
 }
 
-EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateStructs(TSharedPtr<FJsonObject> ParsedIndex,
-																			FString const& IntermediateDir,
-																			FString const& OutputDir,
-																			TSharedPtr<FJsonObject> ConsolidatedOutput)
+EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateStructs(TSharedPtr<FJsonObject> ParsedIndex,
+																		   FString const& IntermediateDir,
+																		   FString const& OutputDir,
+																		   TSharedPtr<FJsonObject> ConsolidatedOutput)
 {
 	FJsonDomBuilder::FArray StructList;
 
@@ -527,10 +559,10 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateStructs(TSha
 	return EIntermediateProcessingResult::Success;
 }
 
-EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateEnums(TSharedPtr<FJsonObject> ParsedIndex,
-																		  FString const& IntermediateDir,
-																		  FString const& OutputDir,
-																		  TSharedPtr<FJsonObject> ConsolidatedOutput)
+EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateEnums(TSharedPtr<FJsonObject> ParsedIndex,
+																		 FString const& IntermediateDir,
+																		 FString const& OutputDir,
+																		 TSharedPtr<FJsonObject> ConsolidatedOutput)
 {
 	FJsonDomBuilder::FArray EnumList;
 
@@ -551,8 +583,8 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateEnums(TShare
 	return EIntermediateProcessingResult::Success;
 }
 
-TOptional<TArray<FString>> DocGenJsonOutputProcessor::GetNamesFromIndexFile(const FString& NameType,
-																			TSharedPtr<FJsonObject> ParsedIndex)
+TOptional<TArray<FString>> DocGenMdxOutputProcessor::GetNamesFromIndexFile(const FString& NameType,
+																		   TSharedPtr<FJsonObject> ParsedIndex)
 {
 	if (!ParsedIndex)
 	{
@@ -583,7 +615,7 @@ TOptional<TArray<FString>> DocGenJsonOutputProcessor::GetNamesFromIndexFile(cons
 	}
 }
 
-TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::LoadFileToJson(FString const& FilePath)
+TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::LoadFileToJson(FString const& FilePath)
 {
 	FString IndexFileString;
 	if (!FFileHelper::LoadFileToString(IndexFileString, &FPlatformFileManager::Get().GetPlatformFile(), *FilePath))

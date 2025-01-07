@@ -7,7 +7,7 @@
 #include "Misc/Optional.h"
 #include "Templates/SharedPointer.h"
 
-class DocGenJsonOutputProcessor : public IDocGenOutputProcessor
+class DocGenMdxOutputProcessor : public IDocGenOutputProcessor
 {
 	FString Quote(const FString& In);
 	TOptional<FString> GetObjectStringField(const TSharedPtr<class FJsonValue> Obj, const FString& FieldName);
@@ -23,15 +23,18 @@ class DocGenJsonOutputProcessor : public IDocGenOutputProcessor
 	TSharedPtr<FJsonObject> ParseEnumFile(const FString& EnumFilePath);
 	void CopyJsonField(const FString& FieldName, TSharedPtr<FJsonObject> ParsedNode, TSharedPtr<FJsonObject> OutNode);
 	TSharedPtr<FJsonObject> InitializeMainOutputFromIndex(TSharedPtr<FJsonObject> ParsedIndex);
-	EIntermediateProcessingResult ConvertJsonToAdoc(FString IntermediateDir);
-	EIntermediateProcessingResult ConvertAdocToHTML(FString IntermediateDir, FString OutputDir);
+	EIntermediateProcessingResult ConvertJsonToMdx(FString IntermediateDir);
+	EIntermediateProcessingResult ConvertMdxToHtml(FString IntermediateDir, FString OutputDir);
 	FFilePath TemplatePath;
 	FDirectoryPath BinaryPath;
-	FFilePath RubyExecutablePath;
+	FDirectoryPath DocRootPath;
+	FDirectoryPath DocusaurusPath;
+	FFilePath NpmExecutablePath;
 
 public:
-	DocGenJsonOutputProcessor(TOptional<FFilePath> TemplatePathOverride, TOptional<FDirectoryPath> BinaryPathOverride,
-							  TOptional<FFilePath> RubyExecutablePathOverride);
+	DocGenMdxOutputProcessor(TOptional<FFilePath> TemplatePathOverride, TOptional<FDirectoryPath> BinaryPathOverride,
+							 TOptional<FFilePath> NpmPathOverride, TOptional<FDirectoryPath> DocRootPathOverride,
+							 TOptional<FDirectoryPath> DocusaurusPathOverride);
 	virtual EIntermediateProcessingResult ProcessIntermediateDocs(FString const& IntermediateDir,
 																  FString const& OutputDir, FString const& DocTitle,
 																  bool bCleanOutput) override;
@@ -43,11 +46,10 @@ public:
 	EIntermediateProcessingResult ConsolidateStructs(TSharedPtr<FJsonObject> ParsedIndex,
 													 FString const& IntermediateDir, FString const& OutputDir,
 													 TSharedPtr<FJsonObject> ConsolidatedOutput);
-	
-	EIntermediateProcessingResult ConsolidateEnums(TSharedPtr<FJsonObject> ParsedIndex,
-													 FString const& IntermediateDir, FString const& OutputDir,
-													 TSharedPtr<FJsonObject> ConsolidatedOutput);
-	
+
+	EIntermediateProcessingResult ConsolidateEnums(TSharedPtr<FJsonObject> ParsedIndex, FString const& IntermediateDir,
+												   FString const& OutputDir,
+												   TSharedPtr<FJsonObject> ConsolidatedOutput);
 
 	TOptional<TArray<FString>> GetNamesFromIndexFile(const FString& NameType, TSharedPtr<FJsonObject> ParsedIndex);
 

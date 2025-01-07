@@ -229,7 +229,7 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 	int SuccessfulNodeCount = 0;
 	while (Current->Enumerators.Dequeue(Current->CurrentEnumerator))
 	{
-		while (Async(EAsyncExecution::TaskGraphMainThread, [GameThread_EnumerateNextObject]() {
+		while (auto ObjInst = Async(EAsyncExecution::TaskGraphMainThread, [GameThread_EnumerateNextObject]() {
 				   return GameThread_EnumerateNextObject();
 			   }).Get()) // Game thread: Enumerate next Obj, get spawner list for Obj, store as
 						 // array of weak ptrs.
@@ -238,8 +238,14 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 			{
 				return;
 			}
-
+			if (Current->SourceObject.IsValid())
+			{
+				Current->DocGen->GenerateWidgetImage(Current->SourceObject.Get());
+			}
+		
 			FNodeDocsGenerator::FNodeProcessingState NodeState;
+			Current->DocGen->ContextString = Current->CurrentEnumerator->GetCurrentContextString();
+				
 			while (auto NodeInst =
 					   Async(EAsyncExecution::TaskGraphMainThread, [&NodeState, GameThread_EnumerateNextNode]() {
 						   return GameThread_EnumerateNextNode(NodeState);
@@ -247,7 +253,6 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 			{
 				// NodeInst should hopefully not reference anything except stuff we control (ie graph object), and
 				// it's rooted so should be safe to deal with here
-
 				// Generate image
 				if (!Current->DocGen->GenerateNodeImage(NodeInst, NodeState))
 				{
@@ -265,6 +270,8 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 			}
 		}
 	}
+
+			
 	for (const auto& Type : Current->TypesToParseForMembers)
 	{
 		Current->DocGen->GenerateTypeMembers(Type.Get());
@@ -361,6 +368,7 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 		Current->Task->NotifySetCompletionState(SNotificationItem::CS_Success);
 		Current->Task->NotifySetHyperlink(FSimpleDelegate::CreateLambda(OnHyperlinkClicked), HyperlinkText);
 		Current->Task->NotifyExpireFadeOut();
+		Current->Task.Reset();
 	});
 }
 

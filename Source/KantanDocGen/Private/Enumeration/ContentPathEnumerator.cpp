@@ -22,14 +22,27 @@ FContentPathEnumerator::FContentPathEnumerator(
 )
 {
 	CurIndex = 0;
-
-	Prepass(InPath);
+	Path = InPath;
+	Prepass();
 }
 
-void FContentPathEnumerator::Prepass(FName const& Path)
+
+FString FContentPathEnumerator::GetCurrentContextString()
+{
+	return Path.ToString();
+}
+
+void FContentPathEnumerator::Prepass()
 {
 	auto& AssetRegistryModule = FModuleManager::GetModuleChecked< FAssetRegistryModule >("AssetRegistry");
 	auto& AssetRegistry = AssetRegistryModule.Get();
+
+	// Get all the asset in our content folders
+	AssetRegistry.SearchAllAssets(true);
+	while (AssetRegistry.IsLoadingAssets())
+	{
+		AssetRegistry.Tick(1.0f);
+	}
 
 	FARFilter Filter;
 	Filter.bRecursiveClasses = true;
@@ -47,7 +60,9 @@ void FContentPathEnumerator::Prepass(FName const& Path)
 	#endif
 
 	AssetRegistry.GetAssetsByPath(Path, AssetList, true);
+	UE_LOG(LogKantanDocGen, Log, TEXT("Found %d assets at '%s'"), AssetList.Num(), *Path.ToString());		
 	AssetRegistry.RunAssetsThroughFilter(AssetList, Filter);
+	UE_LOG(LogKantanDocGen, Log, TEXT("%d assets passed filtering"), AssetList.Num());
 }
 
 UObject* FContentPathEnumerator::GetNext()
