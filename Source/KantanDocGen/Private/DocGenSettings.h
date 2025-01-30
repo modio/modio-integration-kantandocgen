@@ -63,15 +63,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Output")
 	bool bCleanOutputDirectory;
 
-	UPROPERTY(EditAnywhere, Category = "Extra", Meta = (ToolTip = "If true, widget properties will be skipped."))
-	bool bSkipWidgetProperties;
-
 public:
 	FKantanDocGenSettings()
 	{
 		BlueprintContextClass = AActor::StaticClass();
 		bCleanOutputDirectory = false;
-		bSkipWidgetProperties = true;
 	}
 
 	bool HasAnySources() const

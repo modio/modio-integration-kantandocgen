@@ -91,7 +91,7 @@ FNodeDocsGenerator::~FNodeDocsGenerator()
 	CleanUp();
 }
 
-bool FNodeDocsGenerator::GT_Init(FString const& InDocsTitle, FString const& InOutputDir, UClass* BlueprintContextClass, bool bInSkipWidgetProperties)
+bool FNodeDocsGenerator::GT_Init(FString const& InDocsTitle, FString const& InOutputDir, UClass* BlueprintContextClass)
 {
 	DummyBP = CastChecked<UBlueprint>(FKismetEditorUtilities::CreateBlueprint(
 		BlueprintContextClass, ::GetTransientPackage(), NAME_None, EBlueprintType::BPTYPE_Normal,
@@ -117,8 +117,6 @@ bool FNodeDocsGenerator::GT_Init(FString const& InDocsTitle, FString const& InOu
 
 	ClassDocTreeMap.Empty();
 	OutputDir = InOutputDir;
-
-	bSkipWidgetProperties = bInSkipWidgetProperties;
 
 	return true;
 }
@@ -1087,20 +1085,6 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 			auto MemberList = ClassDocTree->FindChildByName("fields");
 			for (TFieldIterator<FProperty> PropertyIterator(ClassInstance); PropertyIterator; ++PropertyIterator)
 			{
-				if (bSkipWidgetProperties)
-				{
-					if (FObjectProperty* ObjectProp = CastField<FObjectProperty>(*PropertyIterator))
-					{
-						if (ObjectProp->PropertyClass->IsChildOf(UWidget::StaticClass()))
-						{
-							// Skip documentation for UWidget-derived subwidgets
-							UE_LOG(LogKantanDocGen, Display, TEXT("Skipping widget property: %s (Type: %s)"),
-								   *PropertyIterator->GetNameCPP(), *ObjectProp->PropertyClass->GetName());
-							continue;
-						}
-					}
-				}
-				
 				if (CastField<FMulticastDelegateProperty>(*PropertyIterator) ||
 					(PropertyIterator->PropertyFlags & CPF_BlueprintVisible) ||
 					(PropertyIterator->HasAnyPropertyFlags(CPF_Deprecated)))

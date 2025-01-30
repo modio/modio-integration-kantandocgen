@@ -88,7 +88,7 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 			Current->Task->NotifySetText(LOCTEXT("DocGenInProgress", "Doc gen in progress"));
 		}
 
-		return Current->DocGen->GT_Init(DocTitle, IntermediateDir, Current->Task->Settings.BlueprintContextClass, Current->Task->Settings.bSkipWidgetProperties);
+		return Current->DocGen->GT_Init(DocTitle, IntermediateDir, Current->Task->Settings.BlueprintContextClass);
 	};
 
 	TFunction<void()> GameThread_EnqueueEnumerators = [Current = this->Current]() {

@@ -42,7 +42,7 @@ public:
 public:
 	/** Callable only from game thread */
 	bool GT_Init(FString const& InDocsTitle, FString const& InOutputDir,
-				 UClass* BlueprintContextClass = AActor::StaticClass(), bool bInSkipWidgetProperties = true);
+				 UClass* BlueprintContextClass = AActor::StaticClass());
 	UK2Node* GT_InitializeForSpawner(UBlueprintNodeSpawner* Spawner, UObject* SourceObject,
 									 FNodeProcessingState& OutState);
 	bool GT_Finalize(FString OutputPath);
@@ -100,7 +100,6 @@ protected:
 	TMap<FString, TSharedPtr<DocTreeNode>> DelegateDocTreeMap;
 	TArray<UDocGenOutputFormatFactoryBase*> OutputFormats;
 	FString OutputDir;
-	bool bSkipWidgetProperties = true;
 	bool SaveAllFormats(FString const& OutDir, TSharedPtr<DocTreeNode> Document)
 	{
 		return false;
