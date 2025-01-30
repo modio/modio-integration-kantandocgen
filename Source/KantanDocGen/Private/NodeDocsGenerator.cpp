@@ -1122,7 +1122,7 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 						return false;
 					}();
 
-					Member->AppendChildWithValue("is_widget", bIsSubWidget ? "true" : "false");
+					Member->AppendChildWithValue("is_subwidget", bIsSubWidget ? "true" : "false");
 
 					// Default to public access
 					FString ComputedAccessSpecifier = "public";
@@ -1307,7 +1307,7 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 						return false;
 					}();
 
-					Member->AppendChildWithValue("is_widget", bIsSubWidget ? "true" : "false");
+					Member->AppendChildWithValue("is_subwidget", bIsSubWidget ? "true" : "false");
 
 					// Default to public access
 					FString ComputedAccessSpecifier = "public";
