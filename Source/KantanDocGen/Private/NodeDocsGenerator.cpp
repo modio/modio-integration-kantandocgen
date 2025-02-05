@@ -1110,6 +1110,20 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 						"instance_editable",
 						PropertyIterator->HasAnyPropertyFlags(CPF_DisableEditOnInstance) ? "false" : "true");
 
+					const bool bIsSubWidget = [PropertyIterator]() mutable
+					{
+						if (FObjectProperty* ObjectProp = CastField<FObjectProperty>(*PropertyIterator))
+						{
+							if (ObjectProp->PropertyClass->IsChildOf(UWidget::StaticClass()) && PropertyIterator->HasAnyPropertyFlags(CPF_BlueprintVisible))
+							{
+								return true;
+							}
+						}
+						return false;
+					}();
+
+					Member->AppendChildWithValue("is_subwidget", bIsSubWidget ? "true" : "false");
+
 					// Default to public access
 					FString ComputedAccessSpecifier = "public";
 					// Native properties have property flags for access specifiers
@@ -1276,9 +1290,24 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 					AddMetaDataMapToNode(Member, PropertyIterator->GetMetaDataMap());
 					Member->AppendChildWithValue("inherited",
 												 PropertyIterator->GetOwnerStruct() != Struct ? "true" : "false");
+					
 					Member->AppendChildWithValue(
 						"instance_editable",
 						PropertyIterator->HasAnyPropertyFlags(CPF_DisableEditOnInstance) ? "false" : "true");
+
+					const bool bIsSubWidget = [PropertyIterator]() mutable
+					{
+						if (FObjectProperty* ObjectProp = CastField<FObjectProperty>(*PropertyIterator))
+						{
+							if (ObjectProp->PropertyClass->IsChildOf(UWidget::StaticClass()) && PropertyIterator->HasAnyPropertyFlags(CPF_BlueprintVisible))
+							{
+								return true;
+							}
+						}
+						return false;
+					}();
+
+					Member->AppendChildWithValue("is_subwidget", bIsSubWidget ? "true" : "false");
 
 					// Default to public access
 					FString ComputedAccessSpecifier = "public";
