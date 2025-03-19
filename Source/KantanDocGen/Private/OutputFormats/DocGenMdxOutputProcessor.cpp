@@ -272,8 +272,8 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString
 	}
 
 	// copy the newly generated mdx and img files into staging directory
-	const FFilePath MdxDestinationPath {DocusaurusStagingPath / "public/en-us/generated-refdocs.mdx"};
-	const FDirectoryPath ImgDestinationPath {DocusaurusStagingPath / "public/en-us/img/generated-refdocs"};
+	const FFilePath MdxDestinationPath {DocusaurusStagingPath / "public/en-us/refdocs.mdx"};
+	const FDirectoryPath ImgDestinationPath {DocusaurusStagingPath / "public/en-us/img/refdocs"};
 	if (IFileManager::Get().Copy(*MdxDestinationPath.FilePath, *OutMdxPath.FilePath) != 0)
 	{
 		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy generated file %s to %s"), *OutMdxPath.FilePath,
@@ -284,10 +284,22 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString
 	IFileManager::Get().FindFilesRecursive(ImgDirectories, *IntermediateDir, TEXT("img"), false, true);
 	for (FString ImgDirectory : ImgDirectories)
 	{
+		if (ImgDirectory.Contains(DocusaurusStagingPath))
+		{
+			continue;
+		}
 		TArray<FString> ImageFiles;
 		IFileManager::Get().FindFiles(ImageFiles, *ImgDirectory, TEXT("png"));
 		for (FString Image : ImageFiles)
 		{
+			// if this limit is adjusted, all <plugin>/Doc/template/function.mdx.in files must be updated to match
+			if (Image.Len() > 140)
+			{
+				UE_LOG(LogKantanDocGen, Warning,
+					   TEXT("Skipping image with filename length %d to avoid windows path length restrictions: %s"),
+					   Image.Len(), *Image);
+				continue;
+			}
 			FString SourceImagePath {ImgDirectory / Image};
 			FString DestinationImagePath {ImgDestinationPath.Path / Image};
 			if (IFileManager::Get().Copy(*DestinationImagePath, *SourceImagePath) != 0)
@@ -311,7 +323,8 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString
 									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
 	if (!InstallProcessHandle.IsValid())
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("npm install step create process failed for %s"), *(NpmExecutablePath.FilePath));
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm install step create process failed for %s"),
+			   *(NpmExecutablePath.FilePath));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 	FPlatformProcess::WaitForProc(InstallProcessHandle);
@@ -330,7 +343,8 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString
 									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
 	if (!BuildProcessHandle.IsValid())
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("npm build step create process failed for %s"), *(NpmExecutablePath.FilePath));
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm build step create process failed for %s"),
+			   *(NpmExecutablePath.FilePath));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 	FPlatformProcess::WaitForProc(BuildProcessHandle);
