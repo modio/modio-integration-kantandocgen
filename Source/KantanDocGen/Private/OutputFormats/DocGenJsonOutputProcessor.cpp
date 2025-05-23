@@ -132,7 +132,7 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseClassFile(const FString&
 
 	TSharedPtr<FJsonObject> OutNode = MakeShared<FJsonObject>();
 	// Reusing the class template for now so renaming id to class_id to be consistent
-	if (TSharedPtr<FJsonValue> Field = ParsedClass->TryGetField("id"))
+	if (TSharedPtr<FJsonValue> Field = ParsedClass->TryGetField(TEXT("id")))
 	{
 		OutNode->SetField("class_id", Field);
 	}
@@ -159,7 +159,7 @@ TSharedPtr<FJsonObject> DocGenJsonOutputProcessor::ParseStructFile(const FString
 
 	TSharedPtr<FJsonObject> OutNode = MakeShared<FJsonObject>();
 	// Reusing the class template for now so renaming id to class_id to be consistent
-	if (TSharedPtr<FJsonValue> Field = ParsedStruct->TryGetField("id"))
+	if (TSharedPtr<FJsonValue> Field = ParsedStruct->TryGetField(TEXT("id")))
 	{
 		OutNode->SetField("class_id", Field);
 	}
@@ -451,7 +451,7 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSha
 				if (TSharedPtr<FJsonObject> NodeJson = ParseNodeFile(NodeFilePath))
 				{
 					FString RelImagePath;
-					if (NodeJson->TryGetStringField("imgpath", RelImagePath))
+					if (NodeJson->TryGetStringField(TEXT("imgpath"), RelImagePath))
 					{
 						FString SourceImagePath = IntermediateDir / ClassName / "nodes" / RelImagePath;
 						SourceImagePath =
@@ -460,7 +460,7 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSha
 												 *SourceImagePath, true);
 					}
 					bool FunctionIsStatic = false;
-					NodeJson->TryGetBoolField("static", FunctionIsStatic);
+					NodeJson->TryGetBoolField(TEXT("static"), FunctionIsStatic);
 
 					if (FunctionIsStatic)
 					{
@@ -480,9 +480,9 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSha
 			FJsonDomBuilder::FObject ClassObj;
 			ClassObj.Set("functions", Nodes);
 			ClassObj.Set("class_id", ClassName);
-			ClassObj.Set("display_name", ParsedClass->GetStringField("display_name"));
-			ClassObj.Set("meta", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField("meta")));
-			ClassObj.Set("parent_class", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField("parent_class")));
+			ClassObj.Set("display_name", ParsedClass->GetStringField(TEXT("display_name")));
+			ClassObj.Set("meta", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("meta"))));
+			ClassObj.Set("parent_class", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("parent_class"))));
 			const TSharedPtr<FJsonObject>* DoxygenBlock;
 			bool bHadDoxygenBlock = ParsedClass->TryGetObjectField("doxygen", DoxygenBlock);
 			if (bHadDoxygenBlock)
@@ -490,8 +490,8 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSha
 				ClassObj.Set("doxygen", MakeShared<FJsonValueObject>(*DoxygenBlock));
 			}
 			const TArray<TSharedPtr<FJsonValue>>* FieldArray;
-			bool bHadFields = ParsedClass->TryGetArrayField("fields", FieldArray);
-			ClassObj.Set("fields", bHadFields ? MakeShared<FJsonValueArray>(*FieldArray)
+			bool bHadFields = ParsedClass->TryGetArrayField(TEXT("fields"), FieldArray);
+			ClassObj.Set(TEXT("fields"), bHadFields ? MakeShared<FJsonValueArray>(*FieldArray)
 											  : MakeShared<FJsonValueArray>(TArray<TSharedPtr<FJsonValue>> {}));
 
 			ClassFunctionList.Set(ClassName, ClassObj);

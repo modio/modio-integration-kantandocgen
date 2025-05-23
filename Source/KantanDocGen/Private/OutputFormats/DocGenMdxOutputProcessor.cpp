@@ -124,20 +124,20 @@ TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseClassFile(const FString& 
 
 	TSharedPtr<FJsonObject> OutNode = MakeShared<FJsonObject>();
 	// Reusing the class template for now so renaming id to class_id to be consistent
-	if (TSharedPtr<FJsonValue> Field = ParsedClass->TryGetField("id"))
+	if (TSharedPtr<FJsonValue> Field = ParsedClass->TryGetField(TEXT("id")))
 	{
 		OutNode->SetField("class_id", Field);
 	}
 
-	CopyJsonField("doxygen", ParsedClass, OutNode);
-	CopyJsonField("display_name", ParsedClass, OutNode);
-	CopyJsonField("fields", ParsedClass, OutNode);
-	CopyJsonField("parent_class", ParsedClass, OutNode);
-	CopyJsonField("meta", ParsedClass, OutNode);
-	CopyJsonField("blueprint_generated", ParsedClass, OutNode);
-	CopyJsonField("widget_blueprint", ParsedClass, OutNode);
-	CopyJsonField("class_path", ParsedClass, OutNode);
-	CopyJsonField("context_string", ParsedClass, OutNode);
+	CopyJsonField(TEXT("doxygen"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("display_name"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("fields"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("parent_class"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("meta"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("blueprint_generated"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("widget_blueprint"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("class_path"), ParsedClass, OutNode);
+	CopyJsonField(TEXT("context_string"), ParsedClass, OutNode);
 	return OutNode;
 }
 
@@ -151,20 +151,20 @@ TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseStructFile(const FString&
 
 	TSharedPtr<FJsonObject> OutNode = MakeShared<FJsonObject>();
 	// Reusing the class template for now so renaming id to class_id to be consistent
-	if (TSharedPtr<FJsonValue> Field = ParsedStruct->TryGetField("id"))
+	if (TSharedPtr<FJsonValue> Field = ParsedStruct->TryGetField(TEXT("id")))
 	{
-		OutNode->SetField("class_id", Field);
+		OutNode->SetField(TEXT("class_id"), Field);
 	}
 
-	CopyJsonField("doxygen", ParsedStruct, OutNode);
-	CopyJsonField("display_name", ParsedStruct, OutNode);
-	CopyJsonField("fields", ParsedStruct, OutNode);
-	CopyJsonField("parent_class", ParsedStruct, OutNode);
-	CopyJsonField("meta", ParsedStruct, OutNode);
-	CopyJsonField("blueprint_generated", ParsedStruct, OutNode);
-	CopyJsonField("widget_blueprint", ParsedStruct, OutNode);
-	CopyJsonField("class_path", ParsedStruct, OutNode);
-	CopyJsonField("context_string", ParsedStruct, OutNode);
+	CopyJsonField(TEXT("doxygen"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("display_name"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("fields"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("parent_class"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("meta"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("blueprint_generated"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("widget_blueprint"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("class_path"), ParsedStruct, OutNode);
+	CopyJsonField(TEXT("context_string"), ParsedStruct, OutNode);
 	return OutNode;
 }
 
@@ -178,11 +178,11 @@ TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::ParseEnumFile(const FString& E
 
 	TSharedPtr<FJsonObject> OutNode = MakeShared<FJsonObject>();
 
-	CopyJsonField("id", ParsedEnum, OutNode);
-	CopyJsonField("doxygen", ParsedEnum, OutNode);
-	CopyJsonField("display_name", ParsedEnum, OutNode);
-	CopyJsonField("values", ParsedEnum, OutNode);
-	CopyJsonField("meta", ParsedEnum, OutNode);
+	CopyJsonField(TEXT("id"), ParsedEnum, OutNode);
+	CopyJsonField(TEXT("doxygen"), ParsedEnum, OutNode);
+	CopyJsonField(TEXT("display_name"), ParsedEnum, OutNode);
+	CopyJsonField(TEXT("values"), ParsedEnum, OutNode);
+	CopyJsonField(TEXT("meta"), ParsedEnum, OutNode);
 
 	return OutNode;
 }
@@ -200,16 +200,16 @@ TSharedPtr<FJsonObject> DocGenMdxOutputProcessor::InitializeMainOutputFromIndex(
 {
 	TSharedPtr<FJsonObject> Output = MakeShared<FJsonObject>();
 
-	CopyJsonField("display_name", ParsedIndex, Output);
+	CopyJsonField(TEXT("display_name"), ParsedIndex, Output);
 	return Output;
 }
 
 EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString IntermediateDir)
 {
-	const FFilePath InJsonPath {IntermediateDir / "consolidated.json"};
-	const FFilePath OutMdxPath {IntermediateDir / "docs.mdx"};
+	const FFilePath InJsonPath {IntermediateDir / TEXT("consolidated.json")};
+	const FFilePath OutMdxPath {IntermediateDir / TEXT("docs.mdx")};
 
-	const FString Format {"markdown"};
+	const FString Format {TEXT("markdown")};
 	void* PipeRead = nullptr;
 	void* PipeWrite = nullptr;
 	verify(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
@@ -217,11 +217,11 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString
 	const FString Args = Quote(TemplatePath.FilePath) + " " + Quote(InJsonPath.FilePath) + " " +
 						 Quote(OutMdxPath.FilePath) + " " + Quote(Format);
 
-	FProcHandle Proc = FPlatformProcess::CreateProc(*(BinaryPath.Path / "convert.exe"), *Args, true, false, false,
+	FProcHandle Proc = FPlatformProcess::CreateProc(*(BinaryPath.Path / TEXT("convert.exe")), *Args, true, false, false,
 													nullptr, 0, nullptr, PipeWrite);
 	if (!Proc.IsValid())
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to create process %s"), *(BinaryPath.Path / "convert.exe"));
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to create process %s"), *(BinaryPath.Path / TEXT("convert.exe")));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 
@@ -253,7 +253,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString
 	}
 
 	// create docusaurus staging directory
-	const FString DocusaurusStagingPath {IntermediateDir / "docusaurus"};
+	const FString DocusaurusStagingPath {IntermediateDir / TEXT("docusaurus")};
 	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*DocusaurusStagingPath, *DocusaurusPath.Path,
 																		 true))
 	{
@@ -267,13 +267,13 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString
 																		 *(DocRootPath.Path), false))
 	{
 		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to merge doc_root %s into docusaurus staging directory %s"),
-			   *(DocRootPath.Path), *(DocusaurusStagingPath / "public"));
+			   *(DocRootPath.Path), *(DocusaurusStagingPath / TEXT("public")));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 
 	// copy the newly generated mdx and img files into staging directory
-	const FFilePath MdxDestinationPath {DocusaurusStagingPath / "public/en-us/refdocs.mdx"};
-	const FDirectoryPath ImgDestinationPath {DocusaurusStagingPath / "public/en-us/img/refdocs"};
+	const FFilePath MdxDestinationPath {DocusaurusStagingPath / TEXT("public/en-us/refdocs.mdx")};
+	const FDirectoryPath ImgDestinationPath {DocusaurusStagingPath / TEXT("public/en-us/img/refdocs")};
 	if (IFileManager::Get().Copy(*MdxDestinationPath.FilePath, *OutMdxPath.FilePath) != 0)
 	{
 		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy generated file %s to %s"), *OutMdxPath.FilePath,
@@ -315,7 +315,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertJsonToMdx(FString
 
 EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString IntermediateDir, FString OutputDir)
 {
-	const FString DocusaurusStagingPath {IntermediateDir / "docusaurus"};
+	const FString DocusaurusStagingPath {IntermediateDir / TEXT("docusaurus")};
 
 	// invoke npm install to install required packages
 	FProcHandle InstallProcessHandle =
@@ -358,11 +358,11 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString
 	}
 
 	// copy result from intermediate directory to output directory
-	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*OutputDir, *(DocusaurusStagingPath / "build"),
+	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*OutputDir, *(DocusaurusStagingPath / TEXT("build")),
 																		 true))
 	{
 		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy build docs %s to output directory %s"),
-			   *(DocusaurusStagingPath / "build"), *OutputDir);
+			   *(DocusaurusStagingPath / TEXT("build")), *OutputDir);
 		return EIntermediateProcessingResult::UnknownError;
 	}
 	return EIntermediateProcessingResult::Success;
@@ -380,7 +380,7 @@ DocGenMdxOutputProcessor::DocGenMdxOutputProcessor(TOptional<FFilePath> Template
 	}
 	else
 	{
-		BinaryPath.Path = FString("bin");
+		BinaryPath.Path = FString(TEXT("bin"));
 	}
 	if (TemplatePathOverride.IsSet())
 	{
@@ -388,7 +388,7 @@ DocGenMdxOutputProcessor::DocGenMdxOutputProcessor(TOptional<FFilePath> Template
 	}
 	else
 	{
-		TemplatePath.FilePath = BinaryPath.Path / "template" / "docs.mdx.in";
+		TemplatePath.FilePath = BinaryPath.Path / TEXT("template") / TEXT("docs.mdx.in");
 	}
 	if (NpmPathOverride.IsSet())
 	{
@@ -396,7 +396,7 @@ DocGenMdxOutputProcessor::DocGenMdxOutputProcessor(TOptional<FFilePath> Template
 	}
 	else
 	{
-		NpmExecutablePath.FilePath = "C:/Program Files/nodejs/npm.cmd";
+		NpmExecutablePath.FilePath = TEXT("C:/Program Files/nodejs/npm.cmd");
 	}
 	if (DocRootPathOverride.IsSet())
 	{
@@ -404,7 +404,7 @@ DocGenMdxOutputProcessor::DocGenMdxOutputProcessor(TOptional<FFilePath> Template
 	}
 	else
 	{
-		DocRootPath.Path = BinaryPath.Path / "doc_root";
+		DocRootPath.Path = BinaryPath.Path / TEXT("doc_root");
 	}
 	if (DocusaurusPathOverride.IsSet())
 	{
@@ -412,7 +412,7 @@ DocGenMdxOutputProcessor::DocGenMdxOutputProcessor(TOptional<FFilePath> Template
 	}
 	else
 	{
-		DocusaurusPath.Path = FPaths::ProjectDir() / "Tools/docusaurus";
+		DocusaurusPath.Path = FPaths::ProjectDir() / TEXT("Tools/docusaurus");
 	}
 }
 
@@ -421,7 +421,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(
 																				FString const& DocTitle,
 																				bool bCleanOutput)
 {
-	TSharedPtr<FJsonObject> ParsedIndex = LoadFileToJson(IntermediateDir / "index.json");
+	TSharedPtr<FJsonObject> ParsedIndex = LoadFileToJson(IntermediateDir / TEXT("index.json"));
 
 	TSharedPtr<FJsonObject> ConsolidatedOutput = InitializeMainOutputFromIndex(ParsedIndex);
 
@@ -450,7 +450,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(
 	auto JsonWriter = TJsonWriterFactory<TCHAR, TPrettyJsonPrintPolicy<TCHAR>>::Create(&Result);
 	FJsonSerializer::Serialize(ConsolidatedOutput.ToSharedRef(), JsonWriter);
 
-	if (!FFileHelper::SaveStringToFile(Result, *(IntermediateDir / "consolidated.json"),
+	if (!FFileHelper::SaveStringToFile(Result, *(IntermediateDir / TEXT("consolidated.json")),
 									   FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 	{
 		return EIntermediateProcessingResult::DiskWriteFailure;
@@ -471,7 +471,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 {
 	FJsonDomBuilder::FArray StaticFunctionList;
 	FJsonDomBuilder::FObject ClassFunctionList;
-	TOptional<TArray<FString>> ClassNames = GetNamesFromIndexFile("classes", ParsedIndex);
+	TOptional<TArray<FString>> ClassNames = GetNamesFromIndexFile(TEXT("classes"), ParsedIndex);
 	if (!ClassNames.IsSet())
 	{
 		return EIntermediateProcessingResult::UnknownError;
@@ -479,8 +479,8 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 
 	for (const auto& ClassName : ClassNames.GetValue())
 	{
-		const FString ClassFilePath = IntermediateDir / ClassName / ClassName + ".json";
-		TOptional<TArray<FString>> NodeNames = GetNamesFromFileAtLocation("nodes", ClassFilePath);
+		const FString ClassFilePath = IntermediateDir / ClassName / ClassName + TEXT(".json");
+		TOptional<TArray<FString>> NodeNames = GetNamesFromFileAtLocation(TEXT("nodes"), ClassFilePath);
 		TSharedPtr<FJsonObject> ParsedClass = ParseStructFile(ClassFilePath);
 		if (!NodeNames.IsSet())
 		{
@@ -492,21 +492,21 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 			FJsonDomBuilder::FArray Nodes;
 			for (const auto& NodeName : NodeNames.GetValue())
 			{
-				const FString NodeFilePath = IntermediateDir / ClassName / "nodes" / NodeName + ".json";
+				const FString NodeFilePath = IntermediateDir / ClassName / TEXT("nodes") / NodeName + TEXT(".json");
 
 				if (TSharedPtr<FJsonObject> NodeJson = ParseNodeFile(NodeFilePath))
 				{
 					FString RelImagePath;
-					if (NodeJson->TryGetStringField("imgpath", RelImagePath))
+					if (NodeJson->TryGetStringField(TEXT("imgpath"), RelImagePath))
 					{
-						FString SourceImagePath = IntermediateDir / ClassName / "nodes" / RelImagePath;
+						FString SourceImagePath = IntermediateDir / ClassName / TEXT("nodes") / RelImagePath;
 						SourceImagePath =
 							IFileManager::Get().ConvertToAbsolutePathForExternalAppForRead(*SourceImagePath);
-						IFileManager::Get().Copy(*(OutputDir / "img" / FPaths::GetCleanFilename(RelImagePath)),
+						IFileManager::Get().Copy(*(OutputDir / TEXT("img") / FPaths::GetCleanFilename(RelImagePath)),
 												 *SourceImagePath, true);
 					}
 					bool FunctionIsStatic = false;
-					NodeJson->TryGetBoolField("static", FunctionIsStatic);
+					NodeJson->TryGetBoolField(TEXT("static"), FunctionIsStatic);
 
 					if (FunctionIsStatic)
 					{
@@ -524,28 +524,28 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 			}
 			// We don't want classes in our classlist if all their nodes are static
 			FJsonDomBuilder::FObject ClassObj;
-			ClassObj.Set("functions", Nodes);
-			ClassObj.Set("class_id", ClassName);
-			ClassObj.Set("display_name", ParsedClass->GetStringField("display_name"));
-			ClassObj.Set("meta", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField("meta")));
-			ClassObj.Set("parent_class", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField("parent_class")));
+			ClassObj.Set(TEXT("functions"), Nodes);
+			ClassObj.Set(TEXT("class_id"), ClassName);
+			ClassObj.Set(TEXT("display_name"), ParsedClass->GetStringField(TEXT("display_name")));
+			ClassObj.Set(TEXT("meta"), MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("meta"))));
+			ClassObj.Set(TEXT("parent_class"), MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("parent_class"))));
 			const TSharedPtr<FJsonObject>* DoxygenBlock;
-			bool bHadDoxygenBlock = ParsedClass->TryGetObjectField("doxygen", DoxygenBlock);
+			bool bHadDoxygenBlock = ParsedClass->TryGetObjectField(TEXT("doxygen"), DoxygenBlock);
 			if (bHadDoxygenBlock)
 			{
-				ClassObj.Set("doxygen", MakeShared<FJsonValueObject>(*DoxygenBlock));
+				ClassObj.Set(TEXT("doxygen"), MakeShared<FJsonValueObject>(*DoxygenBlock));
 			}
 			const TArray<TSharedPtr<FJsonValue>>* FieldArray;
-			bool bHadFields = ParsedClass->TryGetArrayField("fields", FieldArray);
-			ClassObj.Set("fields", bHadFields ? MakeShared<FJsonValueArray>(*FieldArray)
+			bool bHadFields = ParsedClass->TryGetArrayField(TEXT("fields"), FieldArray);
+			ClassObj.Set(TEXT("fields"), bHadFields ? MakeShared<FJsonValueArray>(*FieldArray)
 											  : MakeShared<FJsonValueArray>(TArray<TSharedPtr<FJsonValue>> {}));
 
 			ClassFunctionList.Set(ClassName, ClassObj);
 		}
 	}
 
-	ConsolidatedOutput->SetField("functions", StaticFunctionList.AsJsonValue());
-	ConsolidatedOutput->SetField("classes", ClassFunctionList.AsJsonValue());
+	ConsolidatedOutput->SetField(TEXT("functions"), StaticFunctionList.AsJsonValue());
+	ConsolidatedOutput->SetField(TEXT("classes"), ClassFunctionList.AsJsonValue());
 	return EIntermediateProcessingResult::Success;
 }
 
@@ -556,7 +556,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateStructs(TShar
 {
 	FJsonDomBuilder::FArray StructList;
 
-	TOptional<TArray<FString>> StructNames = GetNamesFromIndexFile("structs", ParsedIndex);
+	TOptional<TArray<FString>> StructNames = GetNamesFromIndexFile(TEXT("structs"), ParsedIndex);
 	if (!StructNames.IsSet())
 	{
 		return EIntermediateProcessingResult::UnknownError;
@@ -564,12 +564,12 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateStructs(TShar
 
 	for (const auto& StructName : StructNames.GetValue())
 	{
-		const FString StructFilePath = IntermediateDir / StructName / StructName + ".json";
+		const FString StructFilePath = IntermediateDir / StructName / StructName + TEXT(".json");
 		TSharedPtr<FJsonObject> StructJson = ParseStructFile(StructFilePath);
 		StructList.Add(MakeShared<FJsonValueObject>(StructJson));
 	}
 
-	ConsolidatedOutput->SetField("structs", StructList.AsJsonValue());
+	ConsolidatedOutput->SetField(TEXT("structs"), StructList.AsJsonValue());
 	return EIntermediateProcessingResult::Success;
 }
 
@@ -580,7 +580,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateEnums(TShared
 {
 	FJsonDomBuilder::FArray EnumList;
 
-	TOptional<TArray<FString>> EnumNames = GetNamesFromIndexFile("enums", ParsedIndex);
+	TOptional<TArray<FString>> EnumNames = GetNamesFromIndexFile(TEXT("enums"), ParsedIndex);
 	if (!EnumNames.IsSet())
 	{
 		return EIntermediateProcessingResult::UnknownError;
@@ -588,12 +588,12 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateEnums(TShared
 
 	for (const auto& EnumName : EnumNames.GetValue())
 	{
-		const FString EnumFilePath = IntermediateDir / EnumName / EnumName + ".json";
+		const FString EnumFilePath = IntermediateDir / EnumName / EnumName + TEXT(".json");
 		TSharedPtr<FJsonObject> EnumJson = ParseEnumFile(EnumFilePath);
 		EnumList.Add(MakeShared<FJsonValueObject>(EnumJson));
 	}
 
-	ConsolidatedOutput->SetField("enums", EnumList.AsJsonValue());
+	ConsolidatedOutput->SetField(TEXT("enums"), EnumList.AsJsonValue());
 	return EIntermediateProcessingResult::Success;
 }
 
@@ -613,7 +613,7 @@ TOptional<TArray<FString>> DocGenMdxOutputProcessor::GetNamesFromIndexFile(const
 	TArray<FString> ClassJsonFiles;
 	for (const auto& ClassEntry : *ClassEntries)
 	{
-		TOptional<FString> ClassID = GetObjectStringField(ClassEntry, "id");
+		TOptional<FString> ClassID = GetObjectStringField(ClassEntry, TEXT("id"));
 		if (ClassID.IsSet())
 		{
 			ClassJsonFiles.Add(ClassID.GetValue());

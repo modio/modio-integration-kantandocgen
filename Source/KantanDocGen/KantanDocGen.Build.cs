@@ -12,7 +12,11 @@ public class KantanDocGen : ModuleRules
 	public KantanDocGen(ReadOnlyTargetRules Target): base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+#if UE_5_2_OR_LATER 
+		IWYUSupport = IWYUSupport.Full;
+#else
 		bEnforceIWYU = true;
+#endif
 		bUseUnity = false;
 
 		PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));

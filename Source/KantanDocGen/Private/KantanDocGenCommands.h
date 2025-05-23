@@ -8,6 +8,7 @@
 
 #include "Framework/Commands/Commands.h"
 #include "Editor/EditorStyle/Public/EditorStyleSet.h"
+#include "Misc/EngineVersionComparison.h"
 
 
 class FKantanDocGenCommands : public TCommands< FKantanDocGenCommands >
@@ -18,7 +19,11 @@ public:
 		"KantanDocGen", // Context name for fast lookup
 		NSLOCTEXT("Contexts", "KantanDocGen", "Kantan Doc Gen"), // Localized context name for displaying
 		NAME_None, // Parent
+#if UE_VERSION_OLDER_THAN(5, 1, 0)
 		FEditorStyle::GetStyleSetName() // Icon Style Set
+#else
+		FAppStyle::GetAppStyleSetName() // Icon Style Set
+#endif
 	)
 	{
 	}
