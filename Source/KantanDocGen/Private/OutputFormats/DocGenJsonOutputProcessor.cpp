@@ -484,10 +484,10 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConsolidateClasses(TSha
 			ClassObj.Set("meta", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("meta"))));
 			ClassObj.Set("parent_class", MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("parent_class"))));
 			const TSharedPtr<FJsonObject>* DoxygenBlock;
-			bool bHadDoxygenBlock = ParsedClass->TryGetObjectField("doxygen", DoxygenBlock);
+			bool bHadDoxygenBlock = ParsedClass->TryGetObjectField(TEXT("doxygen"), DoxygenBlock);
 			if (bHadDoxygenBlock)
 			{
-				ClassObj.Set("doxygen", MakeShared<FJsonValueObject>(*DoxygenBlock));
+				ClassObj.Set(TEXT("doxygen"), MakeShared<FJsonValueObject>(*DoxygenBlock));
 			}
 			const TArray<TSharedPtr<FJsonValue>>* FieldArray;
 			bool bHadFields = ParsedClass->TryGetArrayField(TEXT("fields"), FieldArray);
