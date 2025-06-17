@@ -892,7 +892,7 @@ bool FNodeDocsGenerator::GenerateNodeDocTree(UK2Node* Node, FNodeProcessingState
 	}
 	else
 	{
-		UE_LOG(LogKantanDocGen, Warning, TEXT("[KantanDocGen] Cannot get type for node %s "), *NodeFullTitle);
+		UE_LOG(LogKantanDocGen, Error, TEXT("[KantanDocGen] Cannot get type for node %s "), *NodeFullTitle);
 	}
 	auto InputNode = NodeDocFile->AppendChild("inputs");
 

@@ -290,6 +290,7 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 		// GEditor->PlayEditorSound(CompileSuccessSound);
 		return;
 	}
+	UE_LOG(LogKantanDocGen, Log, TEXT("Created %i nodes to document!"), SuccessfulNodeCount)
 
 	// Game thread: DocGen.GT_Finalize()
 	auto FinalizeResult = Async(EAsyncExecution::TaskGraphMainThread, [GameThread_FinalizeDocs, IntermediateDir]() {
@@ -331,14 +332,14 @@ void FDocGenTaskProcessor::ProcessTask(TSharedPtr<FDocGenTask> InTask)
 
 	if (TransformationResult != EIntermediateProcessingResult::Success)
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to transform xml to html!"));
-
 		auto Msg = FText::Format(LOCTEXT("DocConversionFailed", "Doc gen failed - {0}"),
 								 TransformationResult == EIntermediateProcessingResult::DiskWriteFailure
 									 ? LOCTEXT("CouldNotWriteToOutput",
 											   "Could not write output, please clear output directory or "
 											   "enable 'Clean Output Directory' option")
 									 : LOCTEXT("GenericTransformationFailure", "Conversion failure"));
+
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to transform xml to html! Error: %s"), *Msg.ToString());
 		Async(EAsyncExecution::TaskGraphMainThread, [this, Msg] {
 			Current->Task->NotifySetText(Msg);
 			Current->Task->NotifySetCompletionState(SNotificationItem::CS_Fail);

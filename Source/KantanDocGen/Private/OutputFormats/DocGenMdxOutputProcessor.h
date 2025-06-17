@@ -24,6 +24,7 @@ class DocGenMdxOutputProcessor : public IDocGenOutputProcessor
 	void CopyJsonField(const FString& FieldName, TSharedPtr<FJsonObject> ParsedNode, TSharedPtr<FJsonObject> OutNode);
 	TSharedPtr<FJsonObject> InitializeMainOutputFromIndex(TSharedPtr<FJsonObject> ParsedIndex);
 	EIntermediateProcessingResult ConvertJsonToMdx(FString IntermediateDir);
+	EIntermediateProcessingResult RunNPMCommand(const FString& Command, const FString& PackageJsonPath) const;
 	EIntermediateProcessingResult ConvertMdxToHtml(FString IntermediateDir, FString OutputDir);
 	FFilePath TemplatePath;
 	FDirectoryPath BinaryPath;
@@ -51,7 +52,8 @@ public:
 												   FString const& OutputDir,
 												   TSharedPtr<FJsonObject> ConsolidatedOutput);
 
-	TOptional<TArray<FString>> GetNamesFromIndexFile(const FString& NameType, TSharedPtr<FJsonObject> ParsedIndex);
+	TOptional<TArray<FString>> GetNamesFromIndexFile(const FString& NameType, const FString& ChildNameType,
+													 TSharedPtr<FJsonObject> ParsedIndex);
 
 	TSharedPtr<FJsonObject> LoadFileToJson(FString const& FilePath);
 };
