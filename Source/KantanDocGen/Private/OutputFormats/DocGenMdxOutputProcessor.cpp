@@ -318,53 +318,86 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConvertMdxToHtml(FString
 	const FString DocusaurusStagingPath {IntermediateDir / TEXT("docusaurus")};
 
 	// invoke npm install to install required packages
-	FProcHandle InstallProcessHandle =
-		FPlatformProcess::CreateProc(*(NpmExecutablePath.FilePath), TEXT("install"), true, false, false, nullptr, 0,
-									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
-	if (!InstallProcessHandle.IsValid())
+	if (const EIntermediateProcessingResult ReturnCode = RunNPMCommand(TEXT("install"), DocusaurusStagingPath);
+		ReturnCode != EIntermediateProcessingResult::Success)
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("npm install step create process failed for %s"),
-			   *(NpmExecutablePath.FilePath));
-		return EIntermediateProcessingResult::UnknownError;
-	}
-	FPlatformProcess::WaitForProc(InstallProcessHandle);
-	int32 InstallExitCode;
-	FPlatformProcess::GetProcReturnCode(InstallProcessHandle, &InstallExitCode);
-	FPlatformProcess::CloseProc(InstallProcessHandle);
-	if (InstallExitCode != 0)
-	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("npm install error"));
-		return EIntermediateProcessingResult::UnknownError;
+		return ReturnCode;
 	}
 
 	// invoke npm run build to build the html docs
-	FProcHandle BuildProcessHandle =
-		FPlatformProcess::CreateProc(*(NpmExecutablePath.FilePath), TEXT("run build"), true, false, false, nullptr, 0,
-									 *DocusaurusStagingPath, nullptr, nullptr, nullptr);
-	if (!BuildProcessHandle.IsValid())
+	if (const EIntermediateProcessingResult ReturnCode = RunNPMCommand(TEXT("run build"), DocusaurusStagingPath);
+		ReturnCode != EIntermediateProcessingResult::Success)
 	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("npm build step create process failed for %s"),
-			   *(NpmExecutablePath.FilePath));
-		return EIntermediateProcessingResult::UnknownError;
-	}
-	FPlatformProcess::WaitForProc(BuildProcessHandle);
-	int32 BuildExitCode;
-	FPlatformProcess::GetProcReturnCode(BuildProcessHandle, &BuildExitCode);
-	FPlatformProcess::CloseProc(BuildProcessHandle);
-	if (BuildExitCode != 0)
-	{
-		UE_LOG(LogKantanDocGen, Error, TEXT("npm run build error"));
-		return EIntermediateProcessingResult::UnknownError;
+		return ReturnCode;
 	}
 
 	// copy result from intermediate directory to output directory
-	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(*OutputDir, *(DocusaurusStagingPath / TEXT("build")),
-																		 true))
+	if (!FPlatformFileManager::Get().GetPlatformFile().CopyDirectoryTree(
+			*OutputDir, *(DocusaurusStagingPath / TEXT("build")), true))
 	{
 		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to copy build docs %s to output directory %s"),
 			   *(DocusaurusStagingPath / TEXT("build")), *OutputDir);
 		return EIntermediateProcessingResult::UnknownError;
 	}
+	return EIntermediateProcessingResult::Success;
+}
+
+EIntermediateProcessingResult DocGenMdxOutputProcessor::RunNPMCommand(const FString& Command,
+																	  const FString& PackageJsonPath) const
+{
+	FString NPMDirectory = FPaths::GetPath(NpmExecutablePath.FilePath);
+	FString NodeExe = FString::Printf(TEXT("%s\\node.exe"), *NPMDirectory);
+
+	// We run this JS code to simulate npm.cmd, but allow us to read the output and catch errors
+	FString JsCode = FString::Printf(TEXT("try { "
+										  "  const o = require('child_process').execSync('npm %s'); "
+										  "  console.log(o.toString()); "
+										  "} catch (e) { "
+										  "  console.error(e.stdout?.toString() || e.message); "
+										  "  process.exit(1); "
+										  "}"),
+									 *Command);
+	FString Args = FString::Printf(TEXT("-e \"%s\""), *JsCode);
+
+	void* ReadPipe = nullptr;
+	void* WritePipe = nullptr;
+	FPlatformProcess::CreatePipe(ReadPipe, WritePipe);
+
+	FProcHandle ProcessHandle = FPlatformProcess::CreateProc(*NodeExe, *Args,
+															 true, // bLaunchDetached
+															 false, // bLaunchHidden
+															 false, // bLaunchReallyHidden
+															 nullptr, 0, *PackageJsonPath, WritePipe);
+
+	if (!ProcessHandle.IsValid())
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm command [%s] failed for %s"), *Command, *(NpmExecutablePath.FilePath));
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	FString Output;
+	while (FPlatformProcess::IsProcRunning(ProcessHandle))
+	{
+		Output += FPlatformProcess::ReadPipe(ReadPipe);
+		FPlatformProcess::Sleep(0.1f);
+	}
+	// final flush
+	Output += FPlatformProcess::ReadPipe(ReadPipe);
+
+	int32 ExitCode;
+	FPlatformProcess::GetProcReturnCode(ProcessHandle, &ExitCode);
+	FPlatformProcess::ClosePipe(ReadPipe, WritePipe);
+
+	if (ExitCode != 0)
+	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm command [%s] error"), *Command);
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm exited with code %d"), ExitCode);
+		UE_LOG(LogKantanDocGen, Error, TEXT("npm output:\n%s"), *Output);
+
+		return EIntermediateProcessingResult::UnknownError;
+	}
+
+	UE_LOG(LogKantanDocGen, Log, TEXT("npm command [%s] was a success"), *Command);
 	return EIntermediateProcessingResult::Success;
 }
 
@@ -429,6 +462,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(
 		ConsolidateClasses(ParsedIndex, IntermediateDir, OutputDir, ConsolidatedOutput);
 	if (ClassResult != EIntermediateProcessingResult::Success)
 	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to consolidate classes"));
 		return ClassResult;
 	}
 
@@ -436,6 +470,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(
 		ConsolidateStructs(ParsedIndex, IntermediateDir, OutputDir, ConsolidatedOutput);
 	if (StructResult != EIntermediateProcessingResult::Success)
 	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to consolidate structs"));
 		return StructResult;
 	}
 
@@ -443,6 +478,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(
 		ConsolidateEnums(ParsedIndex, IntermediateDir, OutputDir, ConsolidatedOutput);
 	if (EnumResult != EIntermediateProcessingResult::Success)
 	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to consolidate Enums"));
 		return EnumResult;
 	}
 
@@ -461,6 +497,8 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ProcessIntermediateDocs(
 		// invoke npm to convert mdx to html, and copy results to specified output directory
 		return ConvertMdxToHtml(IntermediateDir, OutputDir);
 	}
+
+	UE_LOG(LogKantanDocGen, Error, TEXT("Failed to consolidate due to unknown error"));
 	return EIntermediateProcessingResult::UnknownError;
 }
 
@@ -471,7 +509,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 {
 	FJsonDomBuilder::FArray StaticFunctionList;
 	FJsonDomBuilder::FObject ClassFunctionList;
-	TOptional<TArray<FString>> ClassNames = GetNamesFromIndexFile(TEXT("classes"), ParsedIndex);
+	TOptional<TArray<FString>> ClassNames = GetNamesFromIndexFile(TEXT("classes"), TEXT("class"), ParsedIndex);
 	if (!ClassNames.IsSet())
 	{
 		return EIntermediateProcessingResult::UnknownError;
@@ -556,7 +594,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateStructs(TShar
 {
 	FJsonDomBuilder::FArray StructList;
 
-	TOptional<TArray<FString>> StructNames = GetNamesFromIndexFile(TEXT("structs"), ParsedIndex);
+	TOptional<TArray<FString>> StructNames = GetNamesFromIndexFile(TEXT("structs"), TEXT("struct"), ParsedIndex);
 	if (!StructNames.IsSet())
 	{
 		return EIntermediateProcessingResult::UnknownError;
@@ -580,14 +618,16 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateEnums(TShared
 {
 	FJsonDomBuilder::FArray EnumList;
 
-	TOptional<TArray<FString>> EnumNames = GetNamesFromIndexFile(TEXT("enums"), ParsedIndex);
+	TOptional<TArray<FString>> EnumNames = GetNamesFromIndexFile(TEXT("enums"), TEXT("enum"), ParsedIndex);
 	if (!EnumNames.IsSet())
 	{
+		UE_LOG(LogKantanDocGen, Error, TEXT("Failed to get enum names from index file"));
 		return EIntermediateProcessingResult::UnknownError;
 	}
 
 	for (const auto& EnumName : EnumNames.GetValue())
 	{
+		UE_LOG(LogKantanDocGen, Log, TEXT("Processing enum: %s"), *EnumName);
 		const FString EnumFilePath = IntermediateDir / EnumName / EnumName + TEXT(".json");
 		TSharedPtr<FJsonObject> EnumJson = ParseEnumFile(EnumFilePath);
 		EnumList.Add(MakeShared<FJsonValueObject>(EnumJson));
@@ -598,27 +638,51 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateEnums(TShared
 }
 
 TOptional<TArray<FString>> DocGenMdxOutputProcessor::GetNamesFromIndexFile(const FString& NameType,
+																		   const FString& ChildNameType,
 																		   TSharedPtr<FJsonObject> ParsedIndex)
 {
 	if (!ParsedIndex)
 	{
 		return {};
 	}
-
-	const TArray<TSharedPtr<FJsonValue>>* ClassEntries;
-	if (!ParsedIndex->TryGetArrayField(NameType, ClassEntries))
-	{
-		return {};
-	}
 	TArray<FString> ClassJsonFiles;
-	for (const auto& ClassEntry : *ClassEntries)
+	TArray<TSharedPtr<FJsonValue>> Entries;
+
+	const TArray<TSharedPtr<FJsonValue>>* ArrayEntries = nullptr;
+	if (ParsedIndex->TryGetArrayField(NameType, ArrayEntries))
 	{
-		TOptional<FString> ClassID = GetObjectStringField(ClassEntry, TEXT("id"));
-		if (ClassID.IsSet())
+		Entries = *ArrayEntries;
+	}
+	// If there was only a single entry, it won't be added as an array and our code generator will fail later on.
+	else
+	{
+		const TSharedPtr<FJsonObject>* ArrayObjectEntry = nullptr;
+		if (ParsedIndex->TryGetObjectField(NameType, ArrayObjectEntry))
 		{
-			ClassJsonFiles.Add(ClassID.GetValue());
+			const TSharedPtr<FJsonObject>* ObjectEntry = nullptr;
+			// This is a special case where we're only storing a single object in the index
+			if ((*ArrayObjectEntry)->TryGetObjectField(ChildNameType, ObjectEntry))
+			{
+				// Wrap the object in a JsonValue for uniform processing
+				Entries.Add(MakeShared<FJsonValueObject>(*ObjectEntry));
+			}
 		}
 	}
+
+	for (const auto& Entry : Entries)
+	{
+		TOptional<FString> EnumID = GetObjectStringField(Entry, TEXT("id"));
+		if (EnumID.IsSet())
+		{
+			UE_LOG(LogKantanDocGen, Log, TEXT("Processing entry: %s"), *EnumID.GetValue());
+			ClassJsonFiles.Add(EnumID.GetValue());
+		}
+		else
+		{
+			UE_LOG(LogKantanDocGen, Error, TEXT("Entry missing 'id' field: %s"), *Entry->AsString());
+		}
+	}
+
 	if (ClassJsonFiles.Num())
 	{
 		return ClassJsonFiles;
