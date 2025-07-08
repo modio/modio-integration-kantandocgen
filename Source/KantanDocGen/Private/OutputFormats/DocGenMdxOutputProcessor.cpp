@@ -347,16 +347,17 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::RunNPMCommand(const FStr
 {
 	FString NPMDirectory = FPaths::GetPath(NpmExecutablePath.FilePath);
 	FString NodeExe = FString::Printf(TEXT("%s\\node.exe"), *NPMDirectory);
-
+	FString EscapedNPMDirectory = NPMDirectory.ReplaceCharWithEscapedChar();
 	// We run this JS code to simulate npm.cmd, but allow us to read the output and catch errors
 	FString JsCode = FString::Printf(TEXT("try { "
-										  "  const o = require('child_process').execSync('npm %s'); "
+										  "  process.env['PATH'] += path.delimiter + '%s';"
+										  "  const o = require('child_process').execSync('%s\\\\npm.cmd %s'); "
 										  "  console.log(o.toString()); "
 										  "} catch (e) { "
 										  "  console.error(e.stdout?.toString() || e.message); "
 										  "  process.exit(1); "
 										  "}"),
-									 *Command);
+									 *EscapedNPMDirectory, *EscapedNPMDirectory, *Command);
 	FString Args = FString::Printf(TEXT("-e \"%s\""), *JsCode);
 
 	void* ReadPipe = nullptr;
@@ -566,7 +567,8 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 			ClassObj.Set(TEXT("class_id"), ClassName);
 			ClassObj.Set(TEXT("display_name"), ParsedClass->GetStringField(TEXT("display_name")));
 			ClassObj.Set(TEXT("meta"), MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("meta"))));
-			ClassObj.Set(TEXT("parent_class"), MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("parent_class"))));
+			ClassObj.Set(TEXT("parent_class"),
+						 MakeShared<FJsonValueObject>(ParsedClass->GetObjectField(TEXT("parent_class"))));
 			const TSharedPtr<FJsonObject>* DoxygenBlock;
 			bool bHadDoxygenBlock = ParsedClass->TryGetObjectField(TEXT("doxygen"), DoxygenBlock);
 			if (bHadDoxygenBlock)
@@ -576,7 +578,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::ConsolidateClasses(TShar
 			const TArray<TSharedPtr<FJsonValue>>* FieldArray;
 			bool bHadFields = ParsedClass->TryGetArrayField(TEXT("fields"), FieldArray);
 			ClassObj.Set(TEXT("fields"), bHadFields ? MakeShared<FJsonValueArray>(*FieldArray)
-											  : MakeShared<FJsonValueArray>(TArray<TSharedPtr<FJsonValue>> {}));
+													: MakeShared<FJsonValueArray>(TArray<TSharedPtr<FJsonValue>> {}));
 
 			ClassFunctionList.Set(ClassName, ClassObj);
 		}
