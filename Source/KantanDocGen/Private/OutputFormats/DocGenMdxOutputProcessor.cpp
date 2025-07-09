@@ -346,24 +346,25 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::RunNPMCommand(const FStr
 																	  const FString& PackageJsonPath) const
 {
 	FString NPMDirectory = FPaths::GetPath(NpmExecutablePath.FilePath);
-	FString NodeExe = FString::Printf(TEXT("%s\\node.exe"), *NPMDirectory);
 
-	FPaths::MakePlatformFilename(NPMDirectory);
-
-	FString JsEscapedNPMDirectory = NPMDirectory.Replace(TEXT("\\"), TEXT("\\\\"));
+	FString NodeExe = FPaths::Combine(*NPMDirectory, TEXT("node.exe"));
+	FString NPMCMD = FPaths::Combine(*NPMDirectory, TEXT("npm.cmd"));
 
 	FString EscapedNPMDirectory = NPMDirectory.ReplaceCharWithEscapedChar();
+	FString EscapedNPMCMD = NPMCMD.ReplaceCharWithEscapedChar();
+
 	// We run this JS code to simulate npm.cmd, but allow us to read the output and catch errors
 	FString JsCode = FString::Printf(TEXT("try { "
 										  "  process.env['PATH'] += path.delimiter + '%s';"
-										  "  const commandToRun = `\"%s\\\\npm.cmd\" %s`;"
+										  "  const commandToRun = `\"\"%s\"\" %s`;"
 										  "  const o = require('child_process').execSync(commandToRun); "
 										  "  console.log(o.toString()); "
 										  "} catch (e) { "
 										  "  console.error(e.stdout?.toString() || e.message); "
 										  "  process.exit(1); "
 										  "}"),
-									 *JsEscapedNPMDirectory, *JsEscapedNPMDirectory, *Command);
+									 *EscapedNPMDirectory, *EscapedNPMCMD, *Command);
+
 	FString Args = FString::Printf(TEXT("-e \"%s\""), *JsCode);
 
 	void* ReadPipe = nullptr;
