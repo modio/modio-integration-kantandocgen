@@ -351,7 +351,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::RunNPMCommand(const FStr
 	// We run this JS code to simulate npm.cmd, but allow us to read the output and catch errors
 	FString JsCode = FString::Printf(TEXT("try { "
 										  "  process.env['PATH'] += path.delimiter + '%s';"
-										  "  const o = require('child_process').execSync('%s\\\\npm.cmd %s'); "
+										  "  const o = require('child_process').execSync('\"%s\\\\npm.cmd\" %s'); "
 										  "  console.log(o.toString()); "
 										  "} catch (e) { "
 										  "  console.error(e.stdout?.toString() || e.message); "
