@@ -347,6 +347,11 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::RunNPMCommand(const FStr
 {
 	FString NPMDirectory = FPaths::GetPath(NpmExecutablePath.FilePath);
 	FString NodeExe = FString::Printf(TEXT("%s\\node.exe"), *NPMDirectory);
+
+	FPaths::MakePlatformFilename(NPMDirectory);
+
+	FString JsEscapedNPMDirectory = NPMDirectory.Replace(TEXT("\\"), TEXT("\\\\"));
+
 	FString EscapedNPMDirectory = NPMDirectory.ReplaceCharWithEscapedChar();
 	// We run this JS code to simulate npm.cmd, but allow us to read the output and catch errors
 	FString JsCode = FString::Printf(TEXT("try { "
@@ -358,7 +363,7 @@ EIntermediateProcessingResult DocGenMdxOutputProcessor::RunNPMCommand(const FStr
 										  "  console.error(e.stdout?.toString() || e.message); "
 										  "  process.exit(1); "
 										  "}"),
-									 *EscapedNPMDirectory, *EscapedNPMDirectory, *Command);
+									 *JsEscapedNPMDirectory, *JsEscapedNPMDirectory, *Command);
 	FString Args = FString::Printf(TEXT("-e \"%s\""), *JsCode);
 
 	void* ReadPipe = nullptr;
