@@ -2,19 +2,25 @@
 
 #include "UObject/MetaData.h"
 #include "UObject/Package.h"
-
-// Compatibility for UPackage::GetMetaData() returning FMetaData& instead of UMetaData* in UE 5.6+
+ 
+/// @brief Namespace containing helper methods to simplify MetaData code
+namespace KantanDocGenMetadataEngineCompat
+{
+	FORCEINLINE static auto GetMetaData(UPackage* Package)
+	{
 #if UE_VERSION_OLDER_THAN(5, 6, 0)
-	// In UE 5.5 and older, GetMetaData() returns a UMetaData*
-	#define GET_METADATA_FROM_PACKAGE(Package) (Package->GetMetaData())
+		return Package->GetMetaData();
 #else
-	// In UE 5.6+, GetMetaData() returns a FMetaData&. We take its address to get a FMetaData*.
-	#define GET_METADATA_FROM_PACKAGE(Package) (&(Package->GetMetaData()))
+		return &Package->GetMetaData();
 #endif
+	}
 
-// Compatibility for UMetaData::GetMapForObject being renamed to FMetaData::GetMapForObject in UE 5.6+
+	FORCEINLINE static TMap<FName, FString>* GetMapForObject(const UObject* Object)
+	{
 #if UE_VERSION_OLDER_THAN(5, 6, 0)
-	#define GET_METADATA_MAP_FOR_OBJECT(StructOrObject) UMetaData::GetMapForObject(StructOrObject)
+		return UMetaData::GetMapForObject(Object);
 #else
-	#define GET_METADATA_MAP_FOR_OBJECT(StructOrObject) FMetaData::GetMapForObject(StructOrObject)
+		return FMetaData::GetMapForObject(Object);
 #endif
+	}
+} // namespace ModioMetadataEngineCompat

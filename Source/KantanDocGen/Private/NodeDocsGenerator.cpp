@@ -587,7 +587,7 @@ TSharedPtr<DocTreeNode> FNodeDocsGenerator::InitClassDocTree(UClass* Class)
 	GetClassDisplayName(Class, DisplayName);
 	ClassDoc->AppendChildWithValueEscaped(TEXT("display_name"), DisplayName.ToString());
 	TMap<FName, FString> Metadata {};
-	if (TMap<FName, FString>* ClassMetadata = GET_METADATA_MAP_FOR_OBJECT(Class))
+	if (TMap<FName, FString>* ClassMetadata = KantanDocGenMetadataEngineCompat::GetMapForObject(Class))
 	{
 		Metadata = *ClassMetadata;
 	}
@@ -599,7 +599,8 @@ TSharedPtr<DocTreeNode> FNodeDocsGenerator::InitClassDocTree(UClass* Class)
 		UWidgetBlueprint* WidgetBP = Cast<UWidgetBlueprint>(AsGeneratedClass->ClassGeneratedBy);
 		if (WidgetBP)
 		{
-			if (TMap<FName, FString>* ClassGeneratedByMetadata = GET_METADATA_MAP_FOR_OBJECT(WidgetBP))
+			if (TMap<FName, FString>* ClassGeneratedByMetadata =
+					KantanDocGenMetadataEngineCompat::GetMapForObject(WidgetBP))
 			{
 				if (ClassGeneratedByMetadata->Num())
 				{
@@ -619,7 +620,7 @@ TSharedPtr<DocTreeNode> FNodeDocsGenerator::InitClassDocTree(UClass* Class)
 		GetClassDisplayName(SuperClass, SuperClassDisplayName);
 		ChildClassNode->AppendChildWithValueEscaped(TEXT("display_name"), SuperClassDisplayName.ToString());
 
-		if (TMap<FName, FString>* SuperMetadata = GET_METADATA_MAP_FOR_OBJECT(SuperClass))
+		if (TMap<FName, FString>* SuperMetadata = KantanDocGenMetadataEngineCompat::GetMapForObject(SuperClass))
 		{
 			if (SuperMetadata->Num())
 			{
@@ -657,7 +658,7 @@ TSharedPtr<DocTreeNode> FNodeDocsGenerator::InitStructDocTree(UScriptStruct* Str
 		StructDoc->AppendChildWithValueEscaped(TEXT("display_name"),
 											   FName::NameToDisplayString(Struct->GetName(), false));
 	}
-	TMap<FName, FString> Metadata = *GET_METADATA_MAP_FOR_OBJECT(Struct);
+	TMap<FName, FString> Metadata = *KantanDocGenMetadataEngineCompat::GetMapForObject(Struct);
 	UStruct* SuperStruct = Struct->GetSuperStruct();
 	auto ChildStructNode = StructDoc;
 	while (SuperStruct)
@@ -675,7 +676,7 @@ TSharedPtr<DocTreeNode> FNodeDocsGenerator::InitStructDocTree(UScriptStruct* Str
 														 FName::NameToDisplayString(SuperStruct->GetName(), false));
 		}
 
-		TMap<FName, FString> SuperMetadata = *GET_METADATA_MAP_FOR_OBJECT(SuperStruct);
+		TMap<FName, FString> SuperMetadata = *KantanDocGenMetadataEngineCompat::GetMapForObject(SuperStruct);
 		if (SuperMetadata.Num())
 		{
 			SuperMetadata.Append(Metadata);
@@ -710,7 +711,7 @@ TSharedPtr<DocTreeNode> FNodeDocsGenerator::InitEnumDocTree(UEnum* Enum)
 	EnumDoc->AppendChildWithValue("class_path", Enum->GetPathName());
 
 	EnumDoc->AppendChild(TEXT("values"));
-	AddMetaDataMapToNode(EnumDoc, GET_METADATA_MAP_FOR_OBJECT(Enum));
+	AddMetaDataMapToNode(EnumDoc, KantanDocGenMetadataEngineCompat::GetMapForObject(Enum));
 	return EnumDoc;
 }
 
@@ -866,7 +867,7 @@ bool FNodeDocsGenerator::GenerateNodeDocTree(UK2Node* Node, FNodeProcessingState
 			{
 				NodeDocFile->AppendChildWithValue("access_specifier", "unknown");
 			}
-			AddMetaDataMapToNode(NodeDocFile, GET_METADATA_MAP_FOR_OBJECT(Func));
+			AddMetaDataMapToNode(NodeDocFile, KantanDocGenMetadataEngineCompat::GetMapForObject(Func));
 			NodeDocFile->AppendChildWithValue("autocast",
 											  Func->HasMetaData(TEXT("BlueprintAutocast")) ? "true" : "false");
 
@@ -1204,7 +1205,9 @@ bool FNodeDocsGenerator::GenerateTypeMembers(UObject* Type)
 				FString OutComment = ClassInstance->GetMetaData(TEXT("Comment"));
 				if (OutComment.IsEmpty() && ClassInstance->ClassGeneratedBy)
 				{
-					OutComment = GET_METADATA_FROM_PACKAGE(ClassInstance->ClassGeneratedBy->GetPackage())->GetValue(ClassInstance->ClassGeneratedBy, "Comment");
+					OutComment =
+						KantanDocGenMetadataEngineCompat::GetMetaData(ClassInstance->ClassGeneratedBy->GetPackage())
+									 ->GetValue(ClassInstance->ClassGeneratedBy, "Comment");
 				}
 				return OutComment;
 			}();
