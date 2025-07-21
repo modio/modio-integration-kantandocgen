@@ -23,4 +23,4 @@ namespace KantanDocGenMetadataEngineCompat
 		return FMetaData::GetMapForObject(Object);
 #endif
 	}
-} // namespace ModioMetadataEngineCompat
+} // namespace KantanDocGenMetadataEngineCompat
