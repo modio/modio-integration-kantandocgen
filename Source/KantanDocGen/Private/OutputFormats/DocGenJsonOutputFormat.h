@@ -54,6 +54,12 @@ public:
 	FDirectoryPath BinaryPath;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	bool bOverrideDocRootPath = false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bOverrideDocRootPath"))
+	FDirectoryPath DocRootPath;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	bool bOverrideRubyPath = false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (EditCondition = "bOverrideRubyPath"))
