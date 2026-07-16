@@ -85,7 +85,11 @@ bool GetClassDisplayName(UClass* TargetClass, FText& DisplayName)
 		return true;
 	}
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 8
+	return FText::FindTextInLiveTable_Advanced(Namespace, Key, DisplayName, &NativeDisplayName);
+#else
 	return FText::FindText(Namespace, Key, /*OUT*/ DisplayName, &NativeDisplayName);
+#endif
 }
 FNodeDocsGenerator::~FNodeDocsGenerator()
 {
