@@ -27,11 +27,12 @@ class DocGenJsonOutputProcessor : public IDocGenOutputProcessor
 	EIntermediateProcessingResult ConvertAdocToHTML(FString IntermediateDir, FString OutputDir);
 	FFilePath TemplatePath;
 	FDirectoryPath BinaryPath;
+	FDirectoryPath DocRootPath;
 	FFilePath RubyExecutablePath;
 
 public:
 	DocGenJsonOutputProcessor(TOptional<FFilePath> TemplatePathOverride, TOptional<FDirectoryPath> BinaryPathOverride,
-							  TOptional<FFilePath> RubyExecutablePathOverride);
+							  TOptional<FFilePath> RubyExecutablePathOverride, TOptional<FDirectoryPath> DocRootPathOverride);
 	virtual EIntermediateProcessingResult ProcessIntermediateDocs(FString const& IntermediateDir,
 																  FString const& OutputDir, FString const& DocTitle,
 																  bool bCleanOutput) override;

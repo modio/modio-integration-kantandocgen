@@ -278,7 +278,7 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConvertAdocToHTML(FStri
 {
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	PlatformFile.CreateDirectory(*(OutputDir / "img"));
-	PlatformFile.CopyDirectoryTree(*(OutputDir / "img"), *(BinaryPath.Path / "img"), true);
+	PlatformFile.CopyDirectoryTree(*(OutputDir / "img"), *(DocRootPath.Path / ".." / "img"), true);
 
 	const FFilePath InAdocPath {IntermediateDir / "docs.adoc"};
 	const FFilePath OutHTMLPath {OutputDir / "documentation.html"};
@@ -286,11 +286,12 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConvertAdocToHTML(FStri
 	void* PipeWrite = nullptr;
 	verify(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
 
-	const FString Args = Quote(BinaryPath.Path / "scripts" / "render_html.rb") + " " + Quote(InAdocPath.FilePath) +
+	const FString Args = Quote(DocRootPath.Path / ".." / "scripts" / "render_html.rb") + " " +
+						 Quote(InAdocPath.FilePath) +
 						 " " + Quote(OutHTMLPath.FilePath);
 
 	FProcHandle Proc = FPlatformProcess::CreateProc(*(RubyExecutablePath.FilePath), *Args, true, false, false, nullptr,
-													0, *(BinaryPath.Path / "scripts"), PipeWrite);
+													0, *(DocRootPath.Path / ".." / "scripts"), PipeWrite);
 
 	int32 ReturnCode = 0;
 	if (Proc.IsValid())
@@ -342,7 +343,8 @@ EIntermediateProcessingResult DocGenJsonOutputProcessor::ConvertAdocToHTML(FStri
 
 DocGenJsonOutputProcessor::DocGenJsonOutputProcessor(TOptional<FFilePath> TemplatePathOverride,
 													 TOptional<FDirectoryPath> BinaryPathOverride,
-													 TOptional<FFilePath> RubyExecutablePathOverride)
+													 TOptional<FFilePath> RubyExecutablePathOverride,
+													 TOptional<FDirectoryPath> DocRootPathOverride)
 {
 	if (BinaryPathOverride.IsSet())
 	{
@@ -369,6 +371,15 @@ DocGenJsonOutputProcessor::DocGenJsonOutputProcessor(TOptional<FFilePath> Templa
 	else
 	{
 		RubyExecutablePath.FilePath = "ruby.exe";
+	}
+
+	if (DocRootPathOverride.IsSet())
+	{
+		DocRootPathOverride = DocRootPathOverride.GetValue();
+	}
+	else
+	{
+		DocRootPath.Path = BinaryPath.Path / "doc_root";
 	}
 }
 

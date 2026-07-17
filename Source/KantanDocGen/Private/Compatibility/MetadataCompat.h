@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Misc/EngineVersionComparison.h"
 #include "UObject/MetaData.h"
 #include "UObject/Package.h"
  

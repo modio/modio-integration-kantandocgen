@@ -121,7 +121,12 @@ TSharedPtr<struct IDocGenOutputProcessor> UDocGenJsonOutputFactory::CreateInterm
 	{
 		RubyOverride = RubyPath;
 	}
-	return MakeShared<DocGenJsonOutputProcessor>(TemplateOverride, BinaryOverride, RubyOverride);
+	TOptional<FDirectoryPath> DocRootPathOverride;
+	if (bOverrideDocRootPath)
+	{
+		DocRootPathOverride = DocRootPath;
+	}
+	return MakeShared<DocGenJsonOutputProcessor>(TemplateOverride, BinaryOverride, RubyOverride, DocRootPathOverride);
 }
 
 FString UDocGenJsonOutputFactory::GetFormatIdentifier()
@@ -155,6 +160,14 @@ void UDocGenJsonOutputFactory::LoadSettings(const FDocGenOutputFormatFactorySett
 			bOverrideRubyPath = (Settings.SettingValues["overrideruby"] == "true");
 		}
 	}
+	if (Settings.SettingValues.Contains("docroot"))
+	{
+		DocRootPath.Path = Settings.SettingValues["docroot"];
+		if (Settings.SettingValues.Contains("overridedocroot"))
+		{
+			bOverrideDocRootPath = (Settings.SettingValues["overridedocroot"] == "true");
+		}
+	}
 }
 
 FDocGenOutputFormatFactorySettings UDocGenJsonOutputFactory::SaveSettings()
@@ -177,6 +190,12 @@ FDocGenOutputFormatFactorySettings UDocGenJsonOutputFactory::SaveSettings()
 		Settings.SettingValues.Add("overrideruby", "true");
 	}
 	Settings.SettingValues.Add("ruby", RubyPath.FilePath);
+
+	if (bOverrideDocRootPath)
+	{
+		Settings.SettingValues.Add("overridedocroot", "true");
+	}
+	Settings.SettingValues.Add("docroot", DocRootPath.Path);
 
 	Settings.FactoryClass = StaticClass();
 	return Settings;

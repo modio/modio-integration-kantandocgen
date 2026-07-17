@@ -19,9 +19,9 @@ struct FDocGenOutputFormatFactorySettings
 	GENERATED_BODY()
 
 	UPROPERTY()
-	TMap<FString, FString> SettingValues;
+	TMap<FString, FString> SettingValues = {};
 	UPROPERTY()
-	UClass* FactoryClass;
+	UClass* FactoryClass = nullptr;
 };
 
 class KANTANDOCGEN_API IDocGenOutputFormatFactory
