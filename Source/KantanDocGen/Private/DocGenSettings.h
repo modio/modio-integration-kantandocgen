@@ -58,7 +58,7 @@ public:
 	TArray<FDocGenOutputFormatFactorySettings> OutputFormatsSerializationData;
 
 	UPROPERTY(Instanced, Export, EditAnywhere, Category = "Output")
-	TArray<class UDocGenOutputFormatFactoryBase*> OutputFormats;
+	TArray<TObjectPtr<class UDocGenOutputFormatFactoryBase>> OutputFormats;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
 	bool bCleanOutputDirectory;
