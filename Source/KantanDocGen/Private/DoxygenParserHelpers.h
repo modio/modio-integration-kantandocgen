@@ -5,7 +5,7 @@
 
 namespace Detail
 {
-	TMap<FString, TArray<FString>> ParseDoxygenTagsForString(const FString& RawDoxygenString)
+	inline TMap<FString, TArray<FString>> ParseDoxygenTagsForString(const FString& RawDoxygenString)
 	{
 		TMap<FString, TArray<FString>> ParsedTags;
 		int32 CurStrPos = 0;

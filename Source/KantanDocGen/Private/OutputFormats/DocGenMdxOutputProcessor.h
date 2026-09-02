@@ -3,6 +3,7 @@
 #include "Containers/Array.h"
 #include "Containers/UnrealString.h"
 #include "DocGenOutputProcessor.h"
+#include "Dom/JsonObject.h"
 #include "Engine/EngineTypes.h"
 #include "Misc/Optional.h"
 #include "Templates/SharedPointer.h"

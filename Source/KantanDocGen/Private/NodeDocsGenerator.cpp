@@ -21,6 +21,7 @@
 #include "DoxygenParserHelpers.h"
 #include "EdGraphSchema_K2.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "HAL/FileManager.h"
 #include "HighResScreenshot.h"
 #include "Input/HittestGrid.h"
 #include "K2Node_DynamicCast.h"
