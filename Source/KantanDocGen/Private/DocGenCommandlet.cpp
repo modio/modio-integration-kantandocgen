@@ -6,10 +6,15 @@
 #include "Containers/Ticker.h"
 #include "Containers/UnrealString.h"
 #include "DocGenSettings.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Interfaces/ISlateRHIRendererModule.h"
 #include "KantanDocGenModule.h"
 #include "Modules/ModuleManager.h"
 #include "OutputFormats/DocGenOutputFormatFactoryBase.h"
+#include "Templates/Casts.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/Package.h"
+#include "UObject/UObjectIterator.h"
 
 UDocGenCommandlet::UDocGenCommandlet()
 {

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "Async/Future.h"
 #include "DocGenTaskProcessor.h" // TUniquePtr seems to need full definition...
 #include "Modules/ModuleManager.h"
 
